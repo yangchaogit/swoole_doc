@@ -1,6 +1,6 @@
 # Makefile for Sphinx documentation
 #
-#
+
 # You can set these variables from the command line.
 SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
@@ -85,17 +85,17 @@ qthelp:
 	@echo
 	@echo "Build finished; now you can run "qcollectiongenerator" with the" \
 	      ".qhcp project file in $(BUILDDIR)/qthelp, like this:"
-	@echo "# qcollectiongenerator $(BUILDDIR)/qthelp/SwooleDocumentationzh_CN.qhcp"
+	@echo "# qcollectiongenerator $(BUILDDIR)/qthelp/swoole.qhcp"
 	@echo "To view the help file:"
-	@echo "# assistant -collectionFile $(BUILDDIR)/qthelp/SwooleDocumentationzh_CN.qhc"
+	@echo "# assistant -collectionFile $(BUILDDIR)/qthelp/swoole.qhc"
 
 devhelp:
 	$(SPHINXBUILD) -b devhelp $(ALLSPHINXOPTS) $(BUILDDIR)/devhelp
 	@echo
 	@echo "Build finished."
 	@echo "To view the help file:"
-	@echo "# mkdir -p $$HOME/.local/share/devhelp/SwooleDocumentationzh_CN"
-	@echo "# ln -s $(BUILDDIR)/devhelp $$HOME/.local/share/devhelp/SwooleDocumentationzh_CN"
+	@echo "# mkdir -p $$HOME/.local/share/devhelp/swoole"
+	@echo "# ln -s $(BUILDDIR)/devhelp $$HOME/.local/share/devhelp/swoole"
 	@echo "# devhelp"
 
 epub:
