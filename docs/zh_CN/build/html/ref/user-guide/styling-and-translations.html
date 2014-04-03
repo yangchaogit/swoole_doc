@@ -1,0 +1,114 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Styling and Translations &mdash; swoole 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="swoole 1.0 documentation" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li><a href="../../index.html">swoole 1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="styling-and-translations">
+<span id="user-guide-styling-and-translations"></span><h1>Styling and Translations<a class="headerlink" href="#styling-and-translations" title="Permalink to this headline">¶</a></h1>
+<p>We’ve picked up the SkeletonApplication’s styling, which is fine, but we need to
+change the title and remove the copyright message.</p>
+<p>The ZendSkeletonApplication is set up to use <tt class="docutils literal"><span class="pre">Zend\I18n</span></tt>’s translation
+functionality for all the text. It uses <tt class="docutils literal"><span class="pre">.po</span></tt> files that live in
+<tt class="docutils literal"><span class="pre">module/Application/language</span></tt>, and you need to use <a class="reference external" href="http://www.poedit.net/download.php">poedit</a> to change the text. Start poedit and
+open <tt class="docutils literal"><span class="pre">module/Application/language/en_US.po</span></tt>. Click on “Skeleton Application” in the
+list of <tt class="docutils literal"><span class="pre">Original</span></tt> strings and then type in “Tutorial” as the translation.</p>
+<img alt="ref/user-guide/../images/user-guide.styling-and-translations.poedit.png" src="ref/user-guide/../images/user-guide.styling-and-translations.poedit.png" />
+<p>Press Save in the toolbar and poedit will create an <tt class="docutils literal"><span class="pre">en_US.mo</span></tt> file for us.
+If you find that no <tt class="docutils literal"><span class="pre">.mo</span></tt> file is generated, check <tt class="docutils literal"><span class="pre">Preferences</span> <span class="pre">-&gt;</span> <span class="pre">Editor</span> <span class="pre">-&gt;</span> <span class="pre">Behavior</span></tt>
+and see if the checkbox marked <tt class="docutils literal"><span class="pre">Automatically</span> <span class="pre">compile</span> <span class="pre">.mo</span> <span class="pre">file</span> <span class="pre">on</span> <span class="pre">save</span></tt> is checked.</p>
+<p>To remove the copyright message, we need to edit the <tt class="docutils literal"><span class="pre">Application</span></tt> module’s
+<tt class="docutils literal"><span class="pre">layout.phtml</span></tt> view script:</p>
+<div class="highlight-php"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>1
+2
+3
+4</pre></div></td><td class="code"><div class="highlight"><pre><span class="x"> // module/Application/view/layout/layout.phtml:</span>
+<span class="x"> // Remove this line:</span>
+<span class="x"> &lt;p&gt;&amp;copy; 2005 - 2014 by Zend Technologies Ltd. </span><span class="cp">&lt;?php</span> <span class="k">echo</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">translate</span><span class="p">(</span><span class="s1">&#39;All</span>
+<span class="s1"> rights reserved.&#39;</span><span class="p">)</span> <span class="cp">?&gt;</span><span class="x">&lt;/p&gt;</span>
+</pre></div>
+</td></tr></table></div>
+<p>The page now looks ever so slightly better now!</p>
+<a class="reference internal image-reference" href="ref/user-guide/../images/user-guide.styling-and-translations.translated-image.png"><img alt="ref/user-guide/../images/user-guide.styling-and-translations.translated-image.png" src="ref/user-guide/../images/user-guide.styling-and-translations.translated-image.png" style="width: 940px;" /></a>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../../_sources/ref/user-guide/styling-and-translations.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li><a href="../../index.html">swoole 1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, swoole doc team.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

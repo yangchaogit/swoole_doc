@@ -1,0 +1,400 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Using Zend\Navigation in your Album Module &mdash; swoole 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="swoole 1.0 documentation" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li><a href="../../index.html">swoole 1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="using-zend-navigation-in-your-album-module">
+<h1>Using Zend\Navigation in your Album Module<a class="headerlink" href="#using-zend-navigation-in-your-album-module" title="Permalink to this headline">¶</a></h1>
+<p>In this tutorial we will use the <em class="xref std std-ref">Zend\Navigation component</em>
+to add a navigation menu to the black bar at the top of the screen, and add
+breadcrumbs above the main site content.</p>
+<div class="section" id="preparation">
+<h2>Preparation<a class="headerlink" href="#preparation" title="Permalink to this headline">¶</a></h2>
+<p>In a real world application, the album browser would be only a portion of a working website. Usually the user
+would land on a homepage first, and be able to view albums by using a standard navigation menu. So that we
+have a site that is more realistic than just the albums feature, lets make the standard skeleton welcome page
+our homepage, with the <cite>/album</cite> route still showing our album module. In order to make this change, we need to
+undo some work we did earlier. Currently, navigating to the root of your app (/) routes you to the
+<tt class="docutils literal"><span class="pre">AlbumController</span></tt>&#8216;s default action. Let&#8217;s undo this route change so we have two discrete entry points to the
+app, a home page, and an albums area.</p>
+<p><tt class="docutils literal"><span class="pre">module/Application/config/module.config.php</span></tt></p>
+<div class="highlight-php"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10</pre></div></td><td class="code"><div class="highlight"><pre><span class="x"> &#39;home&#39; =&gt; array(</span>
+<span class="x">    &#39;type&#39; =&gt; &#39;Zend\Mvc\Router\Http\Literal&#39;,</span>
+<span class="x">     &#39;options&#39; =&gt; array(</span>
+<span class="x">         &#39;route&#39;    =&gt; &#39;/&#39;,</span>
+<span class="x">         &#39;defaults&#39; =&gt; array(</span>
+<span class="x">             &#39;controller&#39; =&gt; &#39;Application\Controller\Index&#39;, // &lt;-- change back here</span>
+<span class="x">             &#39;action&#39;     =&gt; &#39;index&#39;,</span>
+<span class="x">         ),</span>
+<span class="x">     ),</span>
+<span class="x"> ),</span>
+</pre></div>
+</td></tr></table></div>
+<p>This change means that if you go to the home page of your application
+(<tt class="docutils literal"><span class="pre">http://zf2-tutorial.localhost/</span></tt>), you see the default skeleton
+application introduction. Your list of albums is still available at the
+/album route.</p>
+</div>
+<div class="section" id="setting-up-zend-navigation">
+<h2>Setting Up Zend\Navigation<a class="headerlink" href="#setting-up-zend-navigation" title="Permalink to this headline">¶</a></h2>
+<p>Firstly, we need to tell our application which <tt class="docutils literal"><span class="pre">NavigationFactory</span></tt> to
+use when using the bundled navigation view helpers. Thankfully, ZF2
+comes with a default factory that will suit our needs just fine. To tell
+ZF2 to use this default factory, we simply add a <tt class="docutils literal"><span class="pre">navigation</span></tt> key to
+the service manager. Its best to do this in the <tt class="docutils literal"><span class="pre">Application</span></tt> module,
+because, like the translation data, this is specific to the entire
+application, and not just to our album pages:</p>
+<p><tt class="docutils literal"><span class="pre">module/Application/config/module.config.php</span></tt></p>
+<div class="highlight-php"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>1
+2
+3
+4
+5</pre></div></td><td class="code"><div class="highlight"><pre><span class="x"> &#39;service_manager&#39; =&gt; array(</span>
+<span class="x">     &#39;factories&#39; =&gt; array(</span>
+<span class="x">         &#39;navigation&#39; =&gt; &#39;Zend\Navigation\Service\DefaultNavigationFactory&#39;, // &lt;-- add this</span>
+<span class="x">     ),</span>
+<span class="x"> ),</span>
+</pre></div>
+</td></tr></table></div>
+</div>
+<div class="section" id="configuring-our-site-map">
+<h2>Configuring our Site Map<a class="headerlink" href="#configuring-our-site-map" title="Permalink to this headline">¶</a></h2>
+<p>Next up, we need <tt class="docutils literal"><span class="pre">Zend\Navigation</span></tt> to understand the hierarchy of our
+site. Thankfully, if we add a <tt class="docutils literal"><span class="pre">navigation</span></tt> key to our merged config,
+the navigation factory will automagically create the container and pages
+needed to use the view helpers. Let&#8217;s do this in the <tt class="docutils literal"><span class="pre">Application</span></tt>
+module:</p>
+<p><tt class="docutils literal"><span class="pre">module/Application/config/module.config.php</span></tt></p>
+<div class="highlight-php"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33</pre></div></td><td class="code"><div class="highlight"><pre><span class="x"> return array(</span>
+<span class="x"> ...</span>
+<span class="x"> &#39;navigation&#39; =&gt; array(</span>
+<span class="x">     &#39;default&#39; =&gt; array(</span>
+<span class="x">         array(</span>
+<span class="x">             &#39;label&#39; =&gt; &#39;Home&#39;,</span>
+<span class="x">             &#39;route&#39; =&gt; &#39;home&#39;,</span>
+<span class="x">         ),</span>
+<span class="x">         array(</span>
+<span class="x">             &#39;label&#39; =&gt; &#39;Album&#39;,</span>
+<span class="x">             &#39;route&#39; =&gt; &#39;album&#39;,</span>
+<span class="x">             &#39;pages&#39; =&gt; array(</span>
+<span class="x">                 array(</span>
+<span class="x">                     &#39;label&#39; =&gt; &#39;Add&#39;,</span>
+<span class="x">                     &#39;route&#39; =&gt; &#39;album&#39;,</span>
+<span class="x">                     &#39;action&#39; =&gt; &#39;add&#39;,</span>
+<span class="x">                 ),</span>
+<span class="x">                 array(</span>
+<span class="x">                     &#39;label&#39; =&gt; &#39;Edit&#39;,</span>
+<span class="x">                     &#39;route&#39; =&gt; &#39;album&#39;,</span>
+<span class="x">                     &#39;action&#39; =&gt; &#39;edit&#39;,</span>
+<span class="x">                 ),</span>
+<span class="x">                 array(</span>
+<span class="x">                     &#39;label&#39; =&gt; &#39;Delete&#39;,</span>
+<span class="x">                     &#39;route&#39; =&gt; &#39;album&#39;,</span>
+<span class="x">                     &#39;action&#39; =&gt; &#39;delete&#39;,</span>
+<span class="x">                 ),</span>
+<span class="x">             ),</span>
+<span class="x">         ),</span>
+<span class="x">     ),</span>
+<span class="x"> ),</span>
+<span class="x"> ...</span>
+<span class="x"> );</span>
+</pre></div>
+</td></tr></table></div>
+<p>This configuration maps out the pages we&#8217;ve defined in our controller,
+with labels linking to the given route names. You can define highly
+complex hierarchical sites here with pages and sub-pages linking to route
+names, controller/action pairs or external uris. For more information
+see the docs
+<a class="reference external" href="http://framework.zend.com/manual/2.2/en/modules/zend.navigation.quick-start.html">here</a>.</p>
+</div>
+<div class="section" id="adding-the-menu-view-helper">
+<h2>Adding the Menu View Helper<a class="headerlink" href="#adding-the-menu-view-helper" title="Permalink to this headline">¶</a></h2>
+<p>Now that we have the navigation helper configured by our service manager
+and merged config, we can easily add the menu to the title bar to our
+layout by using the <em class="xref std std-ref">menu view helper</em>:</p>
+<p><tt class="docutils literal"><span class="pre">module/Application/view/layout/layout.phtml</span></tt></p>
+<div class="highlight-php"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>1
+2
+3
+4
+5
+6
+7</pre></div></td><td class="code"><div class="highlight"><pre><span class="x"> ...</span>
+<span class="x"> &lt;div class=&quot;collapse navbar-collapse&quot;&gt;</span>
+<span class="x">     &lt;ul class=&quot;nav navbar-nav&quot;&gt;</span>
+<span class="x"> </span><span class="cp">&lt;?php</span> <span class="c1">// &lt;-- Add this !!</span>
+ <span class="k">echo</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">navigation</span><span class="p">(</span><span class="s1">&#39;navigation&#39;</span><span class="p">)</span><span class="o">-&gt;</span><span class="na">menu</span><span class="p">();</span>
+ <span class="cp">?&gt;</span><span class="x"></span>
+<span class="x"> ...</span>
+</pre></div>
+</td></tr></table></div>
+<p>The navigation helper is built in to Zend Framework 2, and uses the
+service manager configuration we&#8217;ve already defined to configure itself
+automatically. Refreshing your application you will see a working menu, with
+just a few tweaks however, we can make it look awesome:</p>
+<p><tt class="docutils literal"><span class="pre">module/Application/view/layout/layout.phtml</span></tt></p>
+<div class="highlight-php"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>1
+2
+3
+4
+5
+6
+7
+8
+9</pre></div></td><td class="code"><div class="highlight"><pre><span class="x"> &lt;div class=&quot;collapse navbar-collapse&quot;&gt;</span>
+<span class="x">     &lt;ul class=&quot;nav navbar-nav&quot;&gt;</span>
+<span class="x"> </span><span class="cp">&lt;?php</span> <span class="c1">// &lt;-- Update this !!</span>
+ <span class="k">echo</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">navigation</span><span class="p">(</span><span class="s1">&#39;navigation&#39;</span><span class="p">)</span>
+           <span class="o">-&gt;</span><span class="na">menu</span><span class="p">()</span>
+           <span class="o">-&gt;</span><span class="na">setMinDepth</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+           <span class="o">-&gt;</span><span class="na">setMaxDepth</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+           <span class="o">-&gt;</span><span class="na">setUlClass</span><span class="p">(</span><span class="s1">&#39;nav navbar-nav&#39;</span><span class="p">);</span>
+ <span class="cp">?&gt;</span><span class="x"></span>
+</pre></div>
+</td></tr></table></div>
+<p>Here we tell the renderer to give the root UL the class of &#8216;nav&#8217; so that
+Twitter Bootstrap styles the menu correctly, and only render the first
+level of any given page. If you view your application in your browser,
+you will now see a nicely styled menu appear in the title bar. The great
+thing about <tt class="docutils literal"><span class="pre">Zend\Navigation</span></tt> is that it integrates with ZF2&#8217;s route
+so can tell which page you are currently viewing. Because of this, it
+sets the active page to have a class of <tt class="docutils literal"><span class="pre">active</span></tt> in the menu. Twitter
+Bootstrap uses this to highlight your current page accordingly.</p>
+</div>
+<div class="section" id="adding-breadcrumbs">
+<h2>Adding Breadcrumbs<a class="headerlink" href="#adding-breadcrumbs" title="Permalink to this headline">¶</a></h2>
+<p>Adding breadcrumbs is initially just as simple. In our <tt class="docutils literal"><span class="pre">layout.phtml</span></tt>
+we want to add breadcrumbs above the main content pane, so our foolish
+user knows exactly where they are in our complex website. Inside the
+container div, before we output the content from the view, let&#8217;s add a
+simple breadcrumb by using the
+<em class="xref std std-ref">breadcrumbs view helper</em>:</p>
+<p><tt class="docutils literal"><span class="pre">module/Application/view/layout/layout.phtml</span></tt></p>
+<div class="highlight-php"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>1
+2
+3
+4
+5
+6</pre></div></td><td class="code"><div class="highlight"><pre><span class="x"> ...</span>
+<span class="x"> &lt;div class=&quot;container&quot;&gt;</span>
+<span class="x">     </span><span class="cp">&lt;?php</span> <span class="k">echo</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">navigation</span><span class="p">(</span><span class="s1">&#39;navigation&#39;</span><span class="p">)</span><span class="o">-&gt;</span><span class="na">breadcrumbs</span><span class="p">()</span><span class="o">-&gt;</span><span class="na">setMinDepth</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span> <span class="c1">// &lt;-- Add this!! ?&gt;</span>
+     <span class="o">&lt;?</span><span class="nx">php</span> <span class="k">echo</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">content</span><span class="p">;</span> <span class="cp">?&gt;</span><span class="x"></span>
+<span class="x"> &lt;/div&gt;</span>
+<span class="x"> ...</span>
+</pre></div>
+</td></tr></table></div>
+<p>This adds a simple but functional breadcrumb to every page (we simply
+tell it to render from a depth of 0 so we see all level of pages) but we
+can do better than that! Because Bootstrap has a styled breadcrumb as
+part of it&#8217;s base CSS, so let&#8217;s add a partial that outputs the UL in
+bootstrap happy CSS. We&#8217;ll create it in the <tt class="docutils literal"><span class="pre">view</span></tt> directory of the
+<tt class="docutils literal"><span class="pre">Application</span></tt> module (this partial is application wide, rather than
+album specific):</p>
+<p><tt class="docutils literal"><span class="pre">module/Application/view/partial/breadcrumb.phtml</span></tt></p>
+<div class="highlight-php"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20</pre></div></td><td class="code"><div class="highlight"><pre><span class="x"> &lt;ul class=&quot;breadcrumb&quot;&gt;</span>
+<span class="x">     </span><span class="cp">&lt;?php</span>
+     <span class="c1">// iterate through the pages</span>
+     <span class="k">foreach</span> <span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">pages</span> <span class="k">as</span> <span class="nv">$key</span> <span class="o">=&gt;</span> <span class="nv">$page</span><span class="p">)</span><span class="o">:</span>
+         <span class="cp">?&gt;</span><span class="x"></span>
+<span class="x">         &lt;li&gt;</span>
+<span class="x">             </span><span class="cp">&lt;?php</span>
+             <span class="c1">// if this isn&#39;t the last page, add a link and the separator</span>
+             <span class="k">if</span> <span class="p">(</span><span class="nv">$key</span> <span class="o">&lt;</span> <span class="nb">count</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">pages</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span><span class="o">:</span>
+                 <span class="cp">?&gt;</span><span class="x"></span>
+<span class="x">                 &lt;a href=&quot;</span><span class="cp">&lt;?php</span> <span class="k">echo</span> <span class="nv">$page</span><span class="o">-&gt;</span><span class="na">getHref</span><span class="p">();</span> <span class="cp">?&gt;</span><span class="x">&quot;&gt;</span><span class="cp">&lt;?php</span> <span class="k">echo</span> <span class="nv">$page</span><span class="o">-&gt;</span><span class="na">getLabel</span><span class="p">();</span> <span class="cp">?&gt;</span><span class="x">&lt;/a&gt;</span>
+<span class="x">             </span><span class="cp">&lt;?php</span>
+             <span class="c1">// otherwise, just output the name</span>
+             <span class="k">else</span><span class="o">:</span>
+             <span class="cp">?&gt;</span><span class="x"></span>
+<span class="x">                 </span><span class="cp">&lt;?php</span> <span class="k">echo</span> <span class="nv">$page</span><span class="o">-&gt;</span><span class="na">getLabel</span><span class="p">();</span> <span class="cp">?&gt;</span><span class="x"></span>
+<span class="x">             </span><span class="cp">&lt;?php</span> <span class="k">endif</span><span class="p">;</span> <span class="cp">?&gt;</span><span class="x"></span>
+<span class="x">         &lt;/li&gt;</span>
+<span class="x">         </span><span class="cp">&lt;?php</span> <span class="k">endforeach</span><span class="p">;</span> <span class="cp">?&gt;</span><span class="x"></span>
+<span class="x"> &lt;/ul&gt;</span>
+</pre></div>
+</td></tr></table></div>
+<p>Notice how the partial is passed a <tt class="docutils literal"><span class="pre">Zend\View\Model\ViewModel</span></tt> instance with the <tt class="docutils literal"><span class="pre">pages</span></tt>
+property set to an array of pages to render. Now all we have to do is
+tell the breadcrumb helper to use the partial we have just written:</p>
+<p><tt class="docutils literal"><span class="pre">module/Application/view/layout/layout.phtml</span></tt></p>
+<div class="highlight-php"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11</pre></div></td><td class="code"><div class="highlight"><pre><span class="x"> ...</span>
+<span class="x"> &lt;div class=&quot;container&quot;&gt;</span>
+<span class="x">     </span><span class="cp">&lt;?php</span>
+     <span class="k">echo</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">navigation</span><span class="p">(</span><span class="s1">&#39;navigation&#39;</span><span class="p">)</span> <span class="c1">// &lt;-- Update this!!</span>
+               <span class="o">-&gt;</span><span class="na">breadcrumbs</span><span class="p">()</span>
+               <span class="o">-&gt;</span><span class="na">setMinDepth</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+               <span class="o">-&gt;</span><span class="na">setPartial</span><span class="p">(</span><span class="k">array</span><span class="p">(</span><span class="s1">&#39;partial/breadcrumb.phtml&#39;</span><span class="p">,</span> <span class="s1">&#39;Album&#39;</span><span class="p">));</span>
+     <span class="cp">?&gt;</span><span class="x"></span>
+<span class="x">     </span><span class="cp">&lt;?php</span> <span class="k">echo</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">content</span><span class="p">;</span> <span class="cp">?&gt;</span><span class="x"></span>
+<span class="x"> &lt;/div&gt;</span>
+<span class="x"> ...</span>
+</pre></div>
+</td></tr></table></div>
+<p>Refreshing the page now gives us a lovely styled set of breadcrumbs on
+each page.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Using Zend\Navigation in your Album Module</a><ul>
+<li><a class="reference internal" href="#preparation">Preparation</a></li>
+<li><a class="reference internal" href="#setting-up-zend-navigation">Setting Up Zend\Navigation</a></li>
+<li><a class="reference internal" href="#configuring-our-site-map">Configuring our Site Map</a></li>
+<li><a class="reference internal" href="#adding-the-menu-view-helper">Adding the Menu View Helper</a></li>
+<li><a class="reference internal" href="#adding-breadcrumbs">Adding Breadcrumbs</a></li>
+</ul>
+</li>
+</ul>
+
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../../_sources/ref/tutorials/tutorial.navigation.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li><a href="../../index.html">swoole 1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, swoole doc team.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>
