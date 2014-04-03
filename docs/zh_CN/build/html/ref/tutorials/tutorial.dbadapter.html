@@ -1,0 +1,221 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Setting up a database adapter &mdash; Swoole Documentation zh_CN 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="Swoole Documentation zh_CN 0.1 documentation" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li><a href="../../index.html">Swoole Documentation zh_CN 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="setting-up-a-database-adapter">
+<span id="dbadapter"></span><h1>Setting up a database adapter<a class="headerlink" href="#setting-up-a-database-adapter" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="introduction">
+<span id="dbadapter-introduction"></span><h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>In most cases, e.g. in your controllers, your database adapter can be fetched directly from the service manager. Some
+classes however, like <tt class="docutils literal"><span class="pre">Zend\Validator\DbRecordExists</span></tt> isn&#8217;t aware of the service manager, but still needs an adapter
+to function.</p>
+<p>There are many different ways to provide this functionality to your application. Below are a few examples.</p>
+</div>
+<div class="section" id="basic-setup">
+<span id="dbadapter-basic-setup"></span><h2>Basic setup<a class="headerlink" href="#basic-setup" title="Permalink to this headline">¶</a></h2>
+<p>Normally you will setup your database adapter using a factory in the service manager in your configuration. It might
+look something like this:</p>
+<div class="highlight-php"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13</pre></div></td><td class="code"><div class="highlight"><pre><span class="x">// config/autoload/global.php</span>
+
+<span class="x">return array(</span>
+<span class="x">   &#39;db&#39; =&gt; array(</span>
+<span class="x">      &#39;driver&#39;         =&gt; &#39;Pdo&#39;,</span>
+<span class="x">      &#39;dsn&#39;            =&gt; &#39;mysql:dbname=zf2tutorial;host=localhost&#39;,</span>
+<span class="x">   ),</span>
+<span class="x">   &#39;service_manager&#39; =&gt; array(</span>
+<span class="x">      &#39;factories&#39; =&gt; array(</span>
+<span class="x">         &#39;Zend\Db\Adapter\Adapter&#39; =&gt; &#39;Zend\Db\Adapter\AdapterServiceFactory&#39;,</span>
+<span class="x">      ),</span>
+<span class="x">   ),</span>
+<span class="x">);</span>
+</pre></div>
+</td></tr></table></div>
+<p>The adapter can then be accessed in any ServiceLocatorAware classes.</p>
+<div class="highlight-php"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>1
+2
+3
+4
+5
+6
+7
+8</pre></div></td><td class="code"><div class="highlight"><pre><span class="x">public function getAdapter()</span>
+<span class="x">{</span>
+<span class="x">   if (!$this-&gt;adapter) {</span>
+<span class="x">      $sm = $this-&gt;getServiceLocator();</span>
+<span class="x">      $this-&gt;adapter = $sm-&gt;get(&#39;Zend\Db\Adapter\Adapter&#39;);</span>
+<span class="x">   }</span>
+<span class="x">   return $this-&gt;adapter;</span>
+<span class="x">}</span>
+</pre></div>
+</td></tr></table></div>
+<p>More information on adapter options can be found in the docs for <em class="xref std std-ref">Zend\Db\Adapter</em>.</p>
+</div>
+<div class="section" id="setting-a-static-adapter">
+<span id="dbadapter-setting-a-static-adapter"></span><h2>Setting a static adapter<a class="headerlink" href="#setting-a-static-adapter" title="Permalink to this headline">¶</a></h2>
+<p>In order to utilize this adapter in non-ServiceLocatorAware classes, you can use
+<tt class="docutils literal"><span class="pre">Zend\Db\TableGateway\Feature\GlobalAdapterFeature::setStaticAdapter()</span></tt> to set a static adapter:</p>
+<div class="highlight-php"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20</pre></div></td><td class="code"><div class="highlight"><pre><span class="x">// config/autoload/global.php</span>
+
+<span class="x">return array(</span>
+<span class="x">   &#39;db&#39; =&gt; array(</span>
+<span class="x">      &#39;driver&#39;         =&gt; &#39;Pdo&#39;,</span>
+<span class="x">      &#39;dsn&#39;            =&gt; &#39;mysql:dbname=zf2tutorial;host=localhost&#39;,</span>
+<span class="x">   ),</span>
+<span class="x">   &#39;service_manager&#39; =&gt; array(</span>
+<span class="x">      &#39;factories&#39; =&gt; array(</span>
+<span class="x">         &#39;Zend\Db\Adapter\Adapter&#39; =&gt; function ($serviceManager) {</span>
+<span class="x">            $adapterFactory = new Zend\Db\Adapter\AdapterServiceFactory();</span>
+<span class="x">               $adapter = $adapterFactory-&gt;createService($serviceManager);</span>
+
+<span class="x">               \Zend\Db\TableGateway\Feature\GlobalAdapterFeature::setStaticAdapter($adapter);</span>
+
+<span class="x">               return $adapter;</span>
+<span class="x">         }</span>
+<span class="x">      ),</span>
+<span class="x">   ),</span>
+<span class="x">);</span>
+</pre></div>
+</td></tr></table></div>
+<p>The adapter can then later be fetched using <tt class="docutils literal"><span class="pre">Zend\Db\TableGateway\Feature\GlobalAdapterFeature::getStaticAdapter()</span></tt>
+for use in e.g. <tt class="docutils literal"><span class="pre">Zend\Validator\DbRecordExists</span></tt>:</p>
+<div class="highlight-php"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>1
+2
+3
+4
+5
+6
+7</pre></div></td><td class="code"><div class="highlight"><pre><span class="x">$validator = new Zend\Validator\Db\RecordExists(</span>
+<span class="x">   array(</span>
+<span class="x">      &#39;table&#39;   =&gt; &#39;users&#39;,</span>
+<span class="x">      &#39;field&#39;   =&gt; &#39;emailaddress&#39;,</span>
+<span class="x">      &#39;adapter&#39; =&gt; \Zend\Db\TableGateway\Feature\GlobalAdapterFeature::getStaticAdapter()</span>
+<span class="x">   )</span>
+<span class="x">);</span>
+</pre></div>
+</td></tr></table></div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Setting up a database adapter</a><ul>
+<li><a class="reference internal" href="#introduction">Introduction</a></li>
+<li><a class="reference internal" href="#basic-setup">Basic setup</a></li>
+<li><a class="reference internal" href="#setting-a-static-adapter">Setting a static adapter</a></li>
+</ul>
+</li>
+</ul>
+
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../../_sources/ref/tutorials/tutorial.dbadapter.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li><a href="../../index.html">Swoole Documentation zh_CN 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, betashepherd.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

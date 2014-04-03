@@ -1,0 +1,1033 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Using the EventManager &mdash; Swoole Documentation zh_CN 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="Swoole Documentation zh_CN 0.1 documentation" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li><a href="../../index.html">Swoole Documentation zh_CN 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="using-the-eventmanager">
+<span id="tutorials-eventmanager-rst"></span><h1>Using the EventManager<a class="headerlink" href="#using-the-eventmanager" title="Permalink to this headline">¶</a></h1>
+<p>This tutorial explores the various features of <tt class="docutils literal"><span class="pre">Zend\EventManager</span></tt>.</p>
+<div class="section" id="terminology">
+<span id="id1"></span><h2>Terminology<a class="headerlink" href="#terminology" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>An <strong>Event</strong> is a named action.</li>
+<li>A <strong>Listener</strong> is any PHP callback that reacts to an <em>event</em>.</li>
+<li>An <strong>EventManager</strong> <em>aggregates</em> listeners for one or more named events, and
+<em>triggers</em> events.</li>
+</ul>
+<p>Typically, an <em>event</em> will be modeled as an object, containing metadata
+surrounding when and how it was triggered, including the event name, what object
+triggered the event (the &#8220;target&#8221;), and what parameters were provided. Events
+are <em>named</em>, which allows a single <em>listener</em> to branch logic based on the
+event.</p>
+</div>
+<div class="section" id="getting-started">
+<span id="id2"></span><h2>Getting started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h2>
+<p>The minimal things necessary to start using events are:</p>
+<ul class="simple">
+<li>An <tt class="docutils literal"><span class="pre">EventManager</span></tt> instance</li>
+<li>One or more listeners on one or more events</li>
+<li>A call to <tt class="docutils literal"><span class="pre">trigger()</span></tt> an event</li>
+</ul>
+<p>The simplest example looks something like this:</p>
+<div class="highlight-php"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15</pre></div></td><td class="code"><div class="highlight"><pre><span class="x">use Zend\EventManager\EventManager;</span>
+
+<span class="x">$events = new EventManager();</span>
+<span class="x">$events-&gt;attach(&#39;do&#39;, function ($e) {</span>
+<span class="x">    $event = $e-&gt;getName();</span>
+<span class="x">    $params = $e-&gt;getParams();</span>
+<span class="x">    printf(</span>
+<span class="x">        &#39;Handled event &quot;%s&quot;, with parameters %s&#39;,</span>
+<span class="x">        $event,</span>
+<span class="x">        json_encode($params)</span>
+<span class="x">    );</span>
+<span class="x">});</span>
+
+<span class="x">$params = array(&#39;foo&#39; =&gt; &#39;bar&#39;, &#39;baz&#39; =&gt; &#39;bat&#39;);</span>
+<span class="x">$events-&gt;trigger(&#39;do&#39;, null, $params);</span>
+</pre></div>
+</td></tr></table></div>
+<p>The above will result in the following:</p>
+<div class="highlight-python"><div class="highlight"><pre>Handled event &quot;do&quot;, with parameters {&quot;foo&quot;:&quot;bar&quot;,&quot;baz&quot;:&quot;bat&quot;}
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Throughout this tutorial, we use closures as listeners. However, any valid
+PHP callback can be attached as a listeners: PHP function names, static
+class methods, object instance methods, functors, or closures. We use
+closures within this post simply for illustration and simplicity.</p>
+</div>
+<p>If you were paying attention to the example, you will have noted the <tt class="docutils literal"><span class="pre">null</span></tt>
+argument. Why is it there?</p>
+<p>Typically, you will compose an <tt class="docutils literal"><span class="pre">EventManager</span></tt> within a class, to allow
+triggering actions within methods. The middle argument to <tt class="docutils literal"><span class="pre">trigger()</span></tt> is the
+&#8220;target&#8221;, and in the case described, would be the current object instance. This
+gives event listeners access to the calling object, which can often be useful.</p>
+<div class="highlight-php"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48</pre></div></td><td class="code"><div class="highlight"><pre><span class="x">use Zend\EventManager\EventManager;</span>
+<span class="x">use Zend\EventManager\EventManagerAwareInterface;</span>
+<span class="x">use Zend\EventManager\EventManagerInterface;</span>
+
+<span class="x">class Example implements EventManagerAwareInterface</span>
+<span class="x">{</span>
+<span class="x">    protected $events;</span>
+
+<span class="x">    public function setEventManager(EventManagerInterface $events)</span>
+<span class="x">    {</span>
+<span class="x">        $events-&gt;setIdentifiers(array(</span>
+<span class="x">            __CLASS__,</span>
+<span class="x">            get_class($this)</span>
+<span class="x">        ));</span>
+<span class="x">        $this-&gt;events = $events;</span>
+<span class="x">    }</span>
+
+<span class="x">    public function getEventManager()</span>
+<span class="x">    {</span>
+<span class="x">        if (!$this-&gt;events) {</span>
+<span class="x">            $this-&gt;setEventManager(new EventManager());</span>
+<span class="x">        }</span>
+<span class="x">        return $this-&gt;events;</span>
+<span class="x">    }</span>
+
+<span class="x">    public function do($foo, $baz)</span>
+<span class="x">    {</span>
+<span class="x">        $params = compact(&#39;foo&#39;, &#39;baz&#39;);</span>
+<span class="x">        $this-&gt;getEventManager()-&gt;trigger(__FUNCTION__, $this, $params);</span>
+<span class="x">    }</span>
+
+<span class="x">}</span>
+
+<span class="x">$example = new Example();</span>
+
+<span class="x">$example-&gt;getEventManager()-&gt;attach(&#39;do&#39;, function($e) {</span>
+<span class="x">    $event  = $e-&gt;getName();</span>
+<span class="x">    $target = get_class($e-&gt;getTarget()); // &quot;Example&quot;</span>
+<span class="x">    $params = $e-&gt;getParams();</span>
+<span class="x">    printf(</span>
+<span class="x">        &#39;Handled event &quot;%s&quot; on target &quot;%s&quot;, with parameters %s&#39;,</span>
+<span class="x">        $event,</span>
+<span class="x">        $target,</span>
+<span class="x">        json_encode($params)</span>
+<span class="x">    );</span>
+<span class="x">});</span>
+
+<span class="x">$example-&gt;do(&#39;bar&#39;, &#39;bat&#39;);</span>
+</pre></div>
+</td></tr></table></div>
+<p>The above is basically the same as the first example. The main difference is
+that we&#8217;re now using that middle argument in order to pass the target, the
+instance of <tt class="docutils literal"><span class="pre">Example</span></tt>, on to the listeners. Our listener is now retrieving
+that (<tt class="docutils literal"><span class="pre">$e-&gt;getTarget()</span></tt>), and doing something with it.</p>
+<p>If you&#8217;re reading this critically, you should have a new question: What is the
+call to <tt class="docutils literal"><span class="pre">setIdentifiers()</span></tt> for?</p>
+</div>
+<div class="section" id="shared-managers">
+<span id="id3"></span><h2>Shared managers<a class="headerlink" href="#shared-managers" title="Permalink to this headline">¶</a></h2>
+<p>One aspect that the <tt class="docutils literal"><span class="pre">EventManager</span></tt> implementation provides is an ability to
+compose a <tt class="docutils literal"><span class="pre">SharedEventManagerInterface</span></tt> implementation.</p>
+<p><tt class="docutils literal"><span class="pre">Zend\EventManager\SharedEventManagerInterface</span></tt> describes an object that
+aggregates listeners for events attached to objects with specific <em>identifiers</em>.
+It does not trigger events itself. Instead, an <tt class="docutils literal"><span class="pre">EventManager</span></tt> instance that
+composes a <tt class="docutils literal"><span class="pre">SharedEventManager</span></tt> will query the <tt class="docutils literal"><span class="pre">SharedEventManager</span></tt> for
+listeners on identifiers it&#8217;s interested in, and trigger those listeners as
+well.</p>
+<p>How does this work, exactly?</p>
+<p>Consider the following:</p>
+<div class="highlight-php"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14</pre></div></td><td class="code"><div class="highlight"><pre><span class="x">use Zend\EventManager\SharedEventManager;</span>
+
+<span class="x">$sharedEvents = new SharedEventManager();</span>
+<span class="x">$sharedEvents-&gt;attach(&#39;Example&#39;, &#39;do&#39;, function ($e) {</span>
+<span class="x">    $event  = $e-&gt;getName();</span>
+<span class="x">    $target = get_class($e-&gt;getTarget()); // &quot;Example&quot;</span>
+<span class="x">    $params = $e-&gt;getParams();</span>
+<span class="x">    printf(</span>
+<span class="x">        &#39;Handled event &quot;%s&quot; on target &quot;%s&quot;, with parameters %s&#39;,</span>
+<span class="x">        $event,</span>
+<span class="x">        $target,</span>
+<span class="x">        json_encode($params)</span>
+<span class="x">    );</span>
+<span class="x">});</span>
+</pre></div>
+</td></tr></table></div>
+<p>This looks almost identical to the previous example; the key difference is that
+there is an additional argument at the <em>start</em> of the list, <tt class="docutils literal"><span class="pre">'Example'</span></tt>. This
+code is basically saying, &#8220;Listen to the &#8216;do&#8217; event of the &#8216;Example&#8217; target,
+and, when notified, execute this callback.&#8221;</p>
+<p>This is where the <tt class="docutils literal"><span class="pre">setIdentifiers()</span></tt> argument of <tt class="docutils literal"><span class="pre">EventManager</span></tt> comes into
+play.  The method allows passing a string, or an array of strings, defining the
+name or names of the context or targets the given instance will be interested
+in. If an array is given, then any listener on any of the targets given will be
+notified.</p>
+<p>So, getting back to our example, let&#8217;s assume that the above shared listener is
+registered, and also that the <tt class="docutils literal"><span class="pre">Example</span></tt> class is defined as above. We can then
+execute the following:</p>
+<div class="highlight-php"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>1
+2
+3</pre></div></td><td class="code"><div class="highlight"><pre><span class="x">$example = new Example();</span>
+<span class="x">$example-&gt;getEventManager()-&gt;setSharedManager($sharedEvents);</span>
+<span class="x">$example-&gt;do(&#39;bar&#39;, &#39;bat&#39;);</span>
+</pre></div>
+</td></tr></table></div>
+<p>and expect the following to be <tt class="docutils literal"><span class="pre">echo</span></tt>&#8216;d:</p>
+<div class="highlight-python"><div class="highlight"><pre>Handled event &quot;do&quot; on target &quot;Example&quot;, with parameters {&quot;foo&quot;:&quot;bar&quot;,&quot;baz&quot;:&quot;bat&quot;}
+</pre></div>
+</div>
+<p>Now, let&#8217;s say we extended <tt class="docutils literal"><span class="pre">Example</span></tt> as follows:</p>
+<div class="highlight-php"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>1
+2
+3</pre></div></td><td class="code"><div class="highlight"><pre><span class="x">class SubExample extends Example</span>
+<span class="x">{</span>
+<span class="x">}</span>
+</pre></div>
+</td></tr></table></div>
+<p>One interesting aspect of our <tt class="docutils literal"><span class="pre">setEventManager()</span></tt> method is that we defined it
+to listen both on <tt class="docutils literal"><span class="pre">__CLASS__</span></tt> and <tt class="docutils literal"><span class="pre">get_class($this)</span></tt>. This means that
+calling <tt class="docutils literal"><span class="pre">do()</span></tt> on our <tt class="docutils literal"><span class="pre">SubExample</span></tt> class would also trigger the shared
+listener! It also means that, if desired, we could attach to specifically
+<tt class="docutils literal"><span class="pre">SubExample</span></tt>, and listeners attached to only the <tt class="docutils literal"><span class="pre">Example</span></tt> target would not
+be triggered.</p>
+<p>Finally, the names used as contexts or targets need not be class names; they can
+be some name that only has meaning in your application if desired. As an
+example, you could have a set of classes that respond to &#8220;log&#8221; or &#8220;cache&#8221; &#8211; and
+listeners on these would be notified by any of them.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">We recommend using class names, interface names, and/or abstract class names
+for identifiers. This makes determining what events are available easier, as
+well as finding which listeners might be attaching to those events.
+Interfaces make a particularly good use case, as they allow attaching to a
+group of related classes a single operation.</p>
+</div>
+<p>At any point, if you do not want to notify shared listeners, pass a <tt class="docutils literal"><span class="pre">null</span></tt>
+value to <tt class="docutils literal"><span class="pre">setSharedManager()</span></tt>:</p>
+<div class="highlight-php"><div class="highlight"><pre><span class="x">$events-&gt;setSharedManager(null);</span>
+</pre></div>
+</div>
+<p>and they will be ignored. If at any point, you want to enable them again, pass
+the <tt class="docutils literal"><span class="pre">SharedEventManager</span></tt> instance:</p>
+<div class="highlight-php"><div class="highlight"><pre><span class="x">$events-&gt;setSharedManager($sharedEvents);</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="wildcards">
+<h1>Wildcards<a class="headerlink" href="#wildcards" title="Permalink to this headline">¶</a></h1>
+<p>So far, with both a normal <tt class="docutils literal"><span class="pre">EventManager</span></tt> instance and with the
+<tt class="docutils literal"><span class="pre">SharedEventManager</span></tt> instance, we&#8217;ve seen the usage of singular strings
+representing the event and target names to which we want to attach. What if you
+want to attach a listener to multiple events or targets?</p>
+<p>The answer is to supply an array of events or targets, or a wildcard, <tt class="docutils literal"><span class="pre">*</span></tt>.</p>
+<p>Consider the following examples:</p>
+<div class="highlight-php"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53</pre></div></td><td class="code"><div class="highlight"><pre><span class="x">// Multiple named events:</span>
+<span class="x">$events-&gt;attach(</span>
+<span class="x">    array(&#39;foo&#39;, &#39;bar&#39;, &#39;baz&#39;), // events</span>
+<span class="x">    $listener</span>
+<span class="x">);</span>
+
+<span class="x">// All events via wildcard:</span>
+<span class="x">$events-&gt;attach(</span>
+<span class="x">    &#39;*&#39;, // all events</span>
+<span class="x">    $listener</span>
+<span class="x">);</span>
+
+<span class="x">// Multiple named targets:</span>
+<span class="x">$sharedEvents-&gt;attach(</span>
+<span class="x">    array(&#39;Foo&#39;, &#39;Bar&#39;, &#39;Baz&#39;), // targets</span>
+<span class="x">    &#39;doSomething&#39;, // named event</span>
+<span class="x">    $listener</span>
+<span class="x">);</span>
+
+<span class="x">// All targets via wildcard</span>
+<span class="x">$sharedEvents-&gt;attach(</span>
+<span class="x">    &#39;*&#39;, // all targets</span>
+<span class="x">    &#39;doSomething&#39;, // named event</span>
+<span class="x">    $listener</span>
+<span class="x">);</span>
+
+<span class="x">// Mix and match: multiple named events on multiple named targets:</span>
+<span class="x">$sharedEvents-&gt;attach(</span>
+<span class="x">    array(&#39;Foo&#39;, &#39;Bar&#39;, &#39;Baz&#39;), // targets</span>
+<span class="x">    array(&#39;foo&#39;, &#39;bar&#39;, &#39;baz&#39;), // events</span>
+<span class="x">    $listener</span>
+<span class="x">);</span>
+
+<span class="x">// Mix and match: all events on multiple named targets:</span>
+<span class="x">$sharedEvents-&gt;attach(</span>
+<span class="x">    array(&#39;Foo&#39;, &#39;Bar&#39;, &#39;Baz&#39;), // targets</span>
+<span class="x">    &#39;*&#39;, // events</span>
+<span class="x">    $listener</span>
+<span class="x">);</span>
+
+<span class="x">// Mix and match: multiple named events on all targets:</span>
+<span class="x">$sharedEvents-&gt;attach(</span>
+<span class="x">    &#39;*&#39;, // targets</span>
+<span class="x">    array(&#39;foo&#39;, &#39;bar&#39;, &#39;baz&#39;), // events</span>
+<span class="x">    $listener</span>
+<span class="x">);</span>
+
+<span class="x">// Mix and match: all events on all targets:</span>
+<span class="x">$sharedEvents-&gt;attach(</span>
+<span class="x">    &#39;*&#39;, // targets</span>
+<span class="x">    &#39;*&#39;, // events</span>
+<span class="x">    $listener</span>
+<span class="x">);</span>
+</pre></div>
+</td></tr></table></div>
+<p>The ability to specify multiple targets and/or events when attaching can slim
+down your code immensely.</p>
+</div>
+<div class="section" id="listener-aggregates">
+<h1>Listener aggregates<a class="headerlink" href="#listener-aggregates" title="Permalink to this headline">¶</a></h1>
+<p>Another approach to listening to multiple events is via a concept of listener
+aggregates, represented by <tt class="docutils literal"><span class="pre">Zend\EventManager\ListenerAggregateInterface</span></tt>.
+Via this approach, a single class can listen to multiple events, attaching
+one or more instance methods as listeners.</p>
+<p>This interface defines two methods, <tt class="docutils literal"><span class="pre">attach(EventManagerInterface</span> <span class="pre">$events)</span></tt>
+and <tt class="docutils literal"><span class="pre">detach(EventManagerInterface</span> <span class="pre">$events)</span></tt>.  Basically, you pass an
+<tt class="docutils literal"><span class="pre">EventManager</span></tt> instance to one and/or the other, and then it&#8217;s up to the
+implementing class to determine what to do.</p>
+<p>As an example:</p>
+<div class="highlight-php"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37</pre></div></td><td class="code"><div class="highlight"><pre><span class="x">use Zend\EventManager\EventInterface;</span>
+<span class="x">use Zend\EventManager\EventManagerInterface;</span>
+<span class="x">use Zend\EventManager\ListenerAggregateInterface;</span>
+<span class="x">use Zend\Log\Logger;</span>
+
+<span class="x">class LogEvents implements ListenerAggregateInterface</span>
+<span class="x">{</span>
+<span class="x">    protected $listeners = array();</span>
+<span class="x">    protected $log;</span>
+
+<span class="x">    public function __construct(Logger $log)</span>
+<span class="x">    {</span>
+<span class="x">        $this-&gt;log = $log;</span>
+<span class="x">    }</span>
+
+<span class="x">    public function attach(EventManagerInterface $events)</span>
+<span class="x">    {</span>
+<span class="x">        $this-&gt;listeners[] = $events-&gt;attach(&#39;do&#39;, array($this, &#39;log&#39;));</span>
+<span class="x">        $this-&gt;listeners[] = $events-&gt;attach(&#39;doSomethingElse&#39;, array($this, &#39;log&#39;));</span>
+<span class="x">    }</span>
+
+<span class="x">    public function detach(EventCollection $events)</span>
+<span class="x">    {</span>
+<span class="x">        foreach ($this-&gt;listeners as $index =&gt; $listener) {</span>
+<span class="x">            if ($events-&gt;detach($listener)) {</span>
+<span class="x">                unset($this-&gt;listeners[$index];</span>
+<span class="x">            }</span>
+<span class="x">        }</span>
+<span class="x">    }</span>
+
+<span class="x">    public function log(EventInterface $e)</span>
+<span class="x">    {</span>
+<span class="x">        $event  = $e-&gt;getName();</span>
+<span class="x">        $params = $e-&gt;getParams();</span>
+<span class="x">        $this-&gt;log-&gt;info(sprintf(&#39;%s: %s&#39;, $event, json_encode($params)));</span>
+<span class="x">    }</span>
+<span class="x">}</span>
+</pre></div>
+</td></tr></table></div>
+<p>You can attach this using either <tt class="docutils literal"><span class="pre">attach()</span></tt> or <tt class="docutils literal"><span class="pre">attachAggregate()</span></tt>:</p>
+<div class="highlight-php"><div class="highlight"><pre><span class="x">$logListener = new LogEvents($logger);</span>
+
+<span class="x">$events-&gt;attachAggregate($logListener); // OR</span>
+<span class="x">$events-&gt;attach($logListener);</span>
+</pre></div>
+</div>
+<p>Any events the aggregate attaches to will then be notified when triggered.</p>
+<p>Why bother? For a couple of reasons:</p>
+<ul class="simple">
+<li>Aggregates allow you to have stateful listeners. The above example
+demonstrates this via the composition of the logger; another example would be
+tracking configuration options.</li>
+<li>Aggregates make detaching listeners easier. When you call <tt class="docutils literal"><span class="pre">attach()</span></tt>
+normally, you receive a <tt class="docutils literal"><span class="pre">Zend\Stdlib\CallbackHandler</span></tt> instance; the only way
+to <tt class="docutils literal"><span class="pre">detach()</span></tt> a listener is to pass that instance back &#8211; which means if you
+want to detach later, you need to keep that instance somewhare. Aggregates
+typically do this for you &#8211; as you can see in the example above.</li>
+</ul>
+<div class="section" id="introspecting-results">
+<span id="id4"></span><h2>Introspecting results<a class="headerlink" href="#introspecting-results" title="Permalink to this headline">¶</a></h2>
+<p>Sometimes you&#8217;ll want to know what your listeners returned. One thing to
+remember is that you may have multiple listeners on the same event; the
+interface for results must be consistent regardless of the number of listeners.</p>
+<p>The <tt class="docutils literal"><span class="pre">EventManager</span></tt> implementation by default returns a
+<tt class="docutils literal"><span class="pre">Zend\EventManager\ResponseCollection</span></tt> instance. This class extends PHP&#8217;s
+<tt class="docutils literal"><span class="pre">SplStack</span></tt>, allowing you to loop through responses in reverse order (since the
+last one executed is likely the one you&#8217;re most interested in). It also
+implements the following methods:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">first()</span></tt> will retrieve the first result received</li>
+<li><tt class="docutils literal"><span class="pre">last()</span></tt> will retrieve the last result received</li>
+<li><tt class="docutils literal"><span class="pre">contains($value)</span></tt> allows you to test all values to see if a given one was
+received, and returns simply a boolean <tt class="docutils literal"><span class="pre">true</span></tt> if found, and <tt class="docutils literal"><span class="pre">false</span></tt> if not.</li>
+</ul>
+<p>Typically, you should not worry about the return values from events, as the
+object triggering the event shouldn&#8217;t really have much insight into what
+listeners are attached. However, sometimes you may want to short-circuit
+execution if interesting results are obtained.</p>
+</div>
+<div class="section" id="short-circuiting-listener-execution">
+<span id="id5"></span><h2>Short-circuiting listener execution<a class="headerlink" href="#short-circuiting-listener-execution" title="Permalink to this headline">¶</a></h2>
+<p>You may want to short-ciruit execution if a particular result is obtained, or if
+a listener determines that something is wrong, or that it can return something
+quicker than the target.</p>
+<p>As examples, one rationale for adding an <tt class="docutils literal"><span class="pre">EventManager</span></tt> is as a caching mechanism.
+You can trigger one event early in the method, returning if a cache is found,
+and trigger another event late in the method, seeding the cache.</p>
+<p>The <tt class="docutils literal"><span class="pre">EventManager</span></tt> component offers two ways to handle this. The first is to
+pass a callback as the last argument to <tt class="docutils literal"><span class="pre">trigger()</span></tt>; if that callback returns
+a boolean <tt class="docutils literal"><span class="pre">true</span></tt>, execution is halted.</p>
+<p>Here&#8217;s an example:</p>
+<div class="highlight-php"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17</pre></div></td><td class="code"><div class="highlight"><pre><span class="x">public function someExpensiveCall($criteria1, $criteria2)</span>
+<span class="x">{</span>
+<span class="x">    $params  = compact(&#39;criteria1&#39;, &#39;criteria2&#39;);</span>
+<span class="x">    $results = $this-&gt;getEventManager()-&gt;trigger(</span>
+<span class="x">        __FUNCTION__,</span>
+<span class="x">        $this,</span>
+<span class="x">        $params,</span>
+<span class="x">        function ($r) {</span>
+<span class="x">            return ($r instanceof SomeResultClass);</span>
+<span class="x">        }</span>
+<span class="x">    );</span>
+<span class="x">    if ($results-&gt;stopped()) {</span>
+<span class="x">        return $results-&gt;last();</span>
+<span class="x">    }</span>
+
+<span class="x">    // ... do some work ...</span>
+<span class="x">}</span>
+</pre></div>
+</td></tr></table></div>
+<p>With this paradigm, we know that the likely reason of execution halting is due
+to the last result meeting the test callback criteria; as such, we simply return
+that last result.</p>
+<p>The other way to halt execution is within a listener, acting on the <tt class="docutils literal"><span class="pre">Event</span></tt>
+object it receives. In this case, the listener calls <tt class="docutils literal"><span class="pre">stopPropagation(true)</span></tt>,
+and the <tt class="docutils literal"><span class="pre">EventManager</span></tt> will then return without notifying any additional
+listeners.</p>
+<div class="highlight-php"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>1
+2
+3
+4</pre></div></td><td class="code"><div class="highlight"><pre><span class="x">$events-&gt;attach(&#39;do&#39;, function ($e) {</span>
+<span class="x">    $e-&gt;stopPropagation();</span>
+<span class="x">    return new SomeResultClass();</span>
+<span class="x">});</span>
+</pre></div>
+</td></tr></table></div>
+<p>This, of course, raises some ambiguity when using the trigger paradigm, as you
+can no longer be certain that the last result meets the criteria it&#8217;s searching
+on. As such, we recommend that you standardize on one approach or the other.</p>
+</div>
+<div class="section" id="keeping-it-in-order">
+<span id="id6"></span><h2>Keeping it in order<a class="headerlink" href="#keeping-it-in-order" title="Permalink to this headline">¶</a></h2>
+<p>On occasion, you may be concerned about the order in which listeners execute. As
+an example, you may want to do any logging early, to ensure that if
+short-circuiting occurs, you&#8217;ve logged; or if implementing a cache, you may want
+to return early if a cache hit is found, and execute late when saving to a
+cache.</p>
+<p>Each of <tt class="docutils literal"><span class="pre">EventManager::attach()</span></tt> and <tt class="docutils literal"><span class="pre">SharedEventManager::attach()</span></tt> accept
+one additional argument, a <em>priority</em>. By default, if this is omitted, listeners
+get a priority of 1, and are executed in the order in which they are attached.
+However, if you provide a priority value, you can influence order of execution.</p>
+<ul class="simple">
+<li>Higher priority values execute <em>earlier</em>.</li>
+<li>Lower (negative) priority values execute <em>later</em>.</li>
+</ul>
+<p>To borrow an example from earlier:</p>
+<div class="highlight-php"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12</pre></div></td><td class="code"><div class="highlight"><pre><span class="x">$priority = 100;</span>
+<span class="x">$events-&gt;attach(&#39;Example&#39;, &#39;do&#39;, function($e) {</span>
+<span class="x">    $event  = $e-&gt;getName();</span>
+<span class="x">    $target = get_class($e-&gt;getTarget()); // &quot;Example&quot;</span>
+<span class="x">    $params = $e-&gt;getParams();</span>
+<span class="x">    printf(</span>
+<span class="x">        &#39;Handled event &quot;%s&quot; on target &quot;%s&quot;, with parameters %s&#39;,</span>
+<span class="x">        $event,</span>
+<span class="x">        $target,</span>
+<span class="x">        json_encode($params)</span>
+<span class="x">    );</span>
+<span class="x">}, $priority);</span>
+</pre></div>
+</td></tr></table></div>
+<p>This would execute with high priority, meaning it would execute early. If we
+changed <tt class="docutils literal"><span class="pre">$priority</span></tt> to <tt class="docutils literal"><span class="pre">-100</span></tt>, it would execute with low priority, executing
+late.</p>
+<p>While you can&#8217;t necessarily know all the listeners attached, chances are you can
+make adequate guesses when necessary in order to set appropriate priority
+values. We advise avoiding setting a priority value unless absolutely necessary.</p>
+</div>
+<div class="section" id="custom-event-objects">
+<span id="id7"></span><h2>Custom event objects<a class="headerlink" href="#custom-event-objects" title="Permalink to this headline">¶</a></h2>
+<p>Hopefully some of you have been wondering, &#8220;where and when is the Event object
+created&#8221;? In all of the examples above, it&#8217;s created based on the arguments
+passed to <tt class="docutils literal"><span class="pre">trigger()</span></tt> &#8211; the event name, target, and parameters. Sometimes,
+however, you may want greater control over the object.</p>
+<p>As an example, one thing that looks like a code smell is when you have code like
+this:</p>
+<div class="highlight-php"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>1
+2
+3
+4</pre></div></td><td class="code"><div class="highlight"><pre><span class="x">$routeMatch = $e-&gt;getParam(&#39;route-match&#39;, false);</span>
+<span class="x">if (!$routeMatch) {</span>
+<span class="x">    // Oh noes! we cannot do our work! whatever shall we do?!?!?!</span>
+<span class="x">}</span>
+</pre></div>
+</td></tr></table></div>
+<p>The problems with this are several. First, relying on string keys is going to
+very quickly run into problems &#8211; typos when setting or retrieving the argument
+can lead to hard to debug situations. Second, we now have a documentation issue;
+how do we document expected arguments? how do we document what we&#8217;re shoving
+into the event? Third, as a side effect, we can&#8217;t use IDE or editor hinting
+support &#8211; string keys give these tools nothing to work with.</p>
+<p>Similarly, consider how you might represent a computational result of a method
+when triggering an event. As an example:</p>
+<div class="highlight-php"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>1
+2
+3
+4
+5
+6
+7
+8
+9</pre></div></td><td class="code"><div class="highlight"><pre><span class="x">// in the method:</span>
+<span class="x">$params[&#39;__RESULT&#39;] = $computedResult;</span>
+<span class="x">$events-&gt;trigger(__FUNCTION__ . &#39;.post&#39;, $this, $params);</span>
+
+<span class="x">// in the listener:</span>
+<span class="x">$result = $e-&gt;getParam(&#39;__RESULT__&#39;);</span>
+<span class="x">if (!$result) {</span>
+<span class="x">    // Oh noes! we cannot do our work! whatever shall we do?!?!?!</span>
+<span class="x">}</span>
+</pre></div>
+</td></tr></table></div>
+<p>Sure, that key may be unique, but it suffers from a lot of the same issues.</p>
+<p>So, the solution is to create custom events. As an example, we have a custom
+<tt class="docutils literal"><span class="pre">MvcEvent</span></tt> in the ZF2 MVC layer. This event composes the application instance,
+the router, the route match object, request and response objects, the view
+model, and also a result. We end up with code like this in our listeners:</p>
+<div class="highlight-php"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>1
+2
+3
+4
+5
+6</pre></div></td><td class="code"><div class="highlight"><pre><span class="x">$response = $e-&gt;getResponse();</span>
+<span class="x">$result   = $e-&gt;getResult();</span>
+<span class="x">if (is_string($result)) {</span>
+<span class="x">    $content = $view-&gt;render(&#39;layout.phtml&#39;, array(&#39;content&#39; =&gt; $result));</span>
+<span class="x">    $response-&gt;setContent($content);</span>
+<span class="x">}</span>
+</pre></div>
+</td></tr></table></div>
+<p>But how do we use this custom event? Simple: <tt class="docutils literal"><span class="pre">trigger()</span></tt> can accept an event
+object instead of any of the event name, target, or params arguments.</p>
+<div class="highlight-php"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18</pre></div></td><td class="code"><div class="highlight"><pre><span class="x">$event = new CustomEvent();</span>
+<span class="x">$event-&gt;setSomeKey($value);</span>
+
+<span class="x">// Injected with event name and target:</span>
+<span class="x">$events-&gt;trigger(&#39;foo&#39;, $this, $event);</span>
+
+<span class="x">// Injected with event name:</span>
+<span class="x">$event-&gt;setTarget($this);</span>
+<span class="x">$events-&gt;trigger(&#39;foo&#39;, $event);</span>
+
+<span class="x">// Fully encapsulates all necessary properties:</span>
+<span class="x">$event-&gt;setName(&#39;foo&#39;);</span>
+<span class="x">$event-&gt;setTarget($this);</span>
+<span class="x">$events-&gt;trigger($event);</span>
+
+<span class="x">// Passing a callback following the event object works for</span>
+<span class="x">// short-circuiting, too.</span>
+<span class="x">$results = $events-&gt;trigger(&#39;foo&#39;, $this, $event, $callback);</span>
+</pre></div>
+</td></tr></table></div>
+<p>This is a really powerful technique for domain-specific event systems, and
+definitely worth experimenting with.</p>
+</div>
+<div class="section" id="putting-it-together-implementing-a-simple-caching-system">
+<span id="putting-it-together"></span><h2>Putting it together: Implementing a simple caching system<a class="headerlink" href="#putting-it-together-implementing-a-simple-caching-system" title="Permalink to this headline">¶</a></h2>
+<p>In previous sections, I indicated that short-circuiting is a way to potentially
+implement a caching solution. Let&#8217;s create a full example.</p>
+<p>First, let&#8217;s define a method that could use caching. You&#8217;ll note that in most of
+the examples, I&#8217;ve used <tt class="docutils literal"><span class="pre">__FUNCTION__</span></tt> as the event name; this is a good practice,
+as it makes it simple to create a macro for triggering events, as well as helps
+to keep event names unique (as they&#8217;re usually within the context of the
+triggering class). However, in the case of a caching example, this would lead to
+identical events being triggered. As such, I recommend postfixing the event name
+with semantic names: &#8220;do.pre&#8221;, &#8220;do.post&#8221;, &#8220;do.error&#8221;, etc. I&#8217;ll use that
+convention in this example.</p>
+<p>Additionally, you&#8217;ll notice that the <tt class="docutils literal"><span class="pre">$params</span></tt> I pass to the event is usually the
+list of parameters passed to the method. This is because those are often not
+stored in the object, and also to ensure the listeners have the exact same
+context as the calling method. But it raises an interesting problem in this
+example: what name do we give the result of the method? One standard that has
+emerged is the use of <tt class="docutils literal"><span class="pre">__RESULT__</span></tt>, as double-underscored variables are
+typically reserved for the sytem.</p>
+<p>Here&#8217;s what the method will look like:</p>
+<div class="highlight-php"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21</pre></div></td><td class="code"><div class="highlight"><pre><span class="x">public function someExpensiveCall($criteria1, $criteria2)</span>
+<span class="x">{</span>
+<span class="x">    $params  = compact(&#39;criteria1&#39;, &#39;criteria2&#39;);</span>
+<span class="x">    $results = $this-&gt;getEventManager()-&gt;trigger(</span>
+<span class="x">        __FUNCTION__ . &#39;.pre&#39;,</span>
+<span class="x">        $this,</span>
+<span class="x">        $params,</span>
+<span class="x">        function ($r) {</span>
+<span class="x">            return ($r instanceof SomeResultClass);</span>
+<span class="x">        }</span>
+<span class="x">    );</span>
+<span class="x">    if ($results-&gt;stopped()) {</span>
+<span class="x">        return $results-&gt;last();</span>
+<span class="x">    }</span>
+
+<span class="x">    // ... do some work ...</span>
+
+<span class="x">    $params[&#39;__RESULT__&#39;] = $calculatedResult;</span>
+<span class="x">    $this-&gt;events()-&gt;trigger(__FUNCTION__ . &#39;.post&#39;, $this, $params);</span>
+<span class="x">    return $calculatedResult;</span>
+<span class="x">}</span>
+</pre></div>
+</td></tr></table></div>
+<p>Now, to provide some caching listeners. We&#8217;ll need to attach to each of the
+&#8220;someExpensiveCall.pre&#8221; and &#8220;someExpensiveCall.post&#8221; methods. In the former
+case, if a cache hit is detected, we return it, and move on. In the latter, we
+store the value in the cache.</p>
+<p>We&#8217;ll assume <tt class="docutils literal"><span class="pre">$cache</span></tt> is defined, and follows the paradigms of <tt class="docutils literal"><span class="pre">Zend\Cache</span></tt>. We&#8217;ll
+want to return early if a hit is detected, and execute late when saving a cache
+(in case the result is modified by another listener). As such, we&#8217;ll set the
+&#8220;someExpensiveCall.pre&#8221; listener to execute with priority <tt class="docutils literal"><span class="pre">100</span></tt>, and the
+&#8220;someExpensiveCall.post&#8221; listener to execute with priority <tt class="docutils literal"><span class="pre">-100</span></tt>.</p>
+<div class="highlight-php"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14</pre></div></td><td class="code"><div class="highlight"><pre><span class="x">$events-&gt;attach(&#39;someExpensiveCall.pre&#39;, function($e) use ($cache) {</span>
+<span class="x">    $params = $e-&gt;getParams();</span>
+<span class="x">    $key    = md5(json_encode($params));</span>
+<span class="x">    $hit    = $cache-&gt;load($key);</span>
+<span class="x">    return $hit;</span>
+<span class="x">}, 100);</span>
+
+<span class="x">$events-&gt;attach(&#39;someExpensiveCall.post&#39;, function($e) use ($cache) {</span>
+<span class="x">    $params = $e-&gt;getParams();</span>
+<span class="x">    $result = $params[&#39;__RESULT__&#39;];</span>
+<span class="x">    unset($params[&#39;__RESULT__&#39;]);</span>
+<span class="x">    $key    = md5(json_encode($params));</span>
+<span class="x">    $cache-&gt;save($result, $key);</span>
+<span class="x">}, -100);</span>
+</pre></div>
+</td></tr></table></div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The above could have been done within a <tt class="docutils literal"><span class="pre">ListenerAggregate</span></tt>, which would
+have allowed keeping the <tt class="docutils literal"><span class="pre">$cache</span></tt> instance as a stateful property, instead
+of importing it into closures.</p>
+</div>
+<p>Another approach would be to move the body of the method to a listener as well,
+which would allow using the priority system in order to implement caching. That
+would look like this:</p>
+<div class="highlight-php"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27</pre></div></td><td class="code"><div class="highlight"><pre><span class="x">public function setEventManager(EventManagerInterface $events)</span>
+<span class="x">{</span>
+<span class="x">    $this-&gt;events = $events;</span>
+<span class="x">    $events-&gt;setIdentifiers(array(__CLASS__, get_class($this)));</span>
+<span class="x">    $events-&gt;attach(&#39;someExpensiveCall&#39;, array($this, &#39;doSomeExpensiveCall&#39;));</span>
+<span class="x">}</span>
+
+<span class="x">public function someExpensiveCall($criteria1, $criteria2)</span>
+<span class="x">{</span>
+<span class="x">    $params  = compact(&#39;criteria1&#39;, &#39;criteria2&#39;);</span>
+<span class="x">    $results = $this-&gt;getEventManager()-&gt;trigger(</span>
+<span class="x">        __FUNCTION__,</span>
+<span class="x">        $this,</span>
+<span class="x">        $params,</span>
+<span class="x">        function ($r) {</span>
+<span class="x">            return ($r instanceof SomeResultClass);</span>
+<span class="x">        }</span>
+<span class="x">    );</span>
+<span class="x">    return $results-&gt;last();</span>
+<span class="x">}</span>
+
+<span class="x">public function doSomeExpensiveCall($e)</span>
+<span class="x">{</span>
+<span class="x">    // ... do some work ...</span>
+<span class="x">    $e-&gt;setParam(&#39;__RESULT__&#39;, $calculatedResult);</span>
+<span class="x">    return $calculatedResult;</span>
+<span class="x">}</span>
+</pre></div>
+</td></tr></table></div>
+<p>The listeners would then attach to the &#8220;someExpensiveCall&#8221; event, with the cache
+lookup listener listening at high priority, and the cache storage listener
+listening at low (negative) priority.</p>
+<p>Sure, we could probably simply add caching to the object itself - but this
+approach allows the same handlers to be attached to multiple events, or to
+attach multiple listeners to the same events (e.g. an argument validator, a
+logger and a cache manager). The point is that if you design your object with
+events in mind, you can easily make it more flexible and extensible, without
+requiring developers to actually extend it &#8211; they can simply attach listeners.</p>
+</div>
+<div class="section" id="conclusion">
+<span id="id8"></span><h2>Conclusion<a class="headerlink" href="#conclusion" title="Permalink to this headline">¶</a></h2>
+<p>The <tt class="docutils literal"><span class="pre">EventManager</span></tt> is a powerful component. It drives the workflow of the MVC
+layer, and is used in countless components to provide hook points for developers
+to manipulate the workflow. It can be put to any number of uses inside your own
+code, and is an important part of your Zend Framework toolbox.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Using the EventManager</a><ul>
+<li><a class="reference internal" href="#terminology">Terminology</a></li>
+<li><a class="reference internal" href="#getting-started">Getting started</a></li>
+<li><a class="reference internal" href="#shared-managers">Shared managers</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#wildcards">Wildcards</a></li>
+<li><a class="reference internal" href="#listener-aggregates">Listener aggregates</a><ul>
+<li><a class="reference internal" href="#introspecting-results">Introspecting results</a></li>
+<li><a class="reference internal" href="#short-circuiting-listener-execution">Short-circuiting listener execution</a></li>
+<li><a class="reference internal" href="#keeping-it-in-order">Keeping it in order</a></li>
+<li><a class="reference internal" href="#custom-event-objects">Custom event objects</a></li>
+<li><a class="reference internal" href="#putting-it-together-implementing-a-simple-caching-system">Putting it together: Implementing a simple caching system</a></li>
+<li><a class="reference internal" href="#conclusion">Conclusion</a></li>
+</ul>
+</li>
+</ul>
+
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../../_sources/ref/tutorials/tutorial.eventmanager.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li><a href="../../index.html">Swoole Documentation zh_CN 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, betashepherd.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

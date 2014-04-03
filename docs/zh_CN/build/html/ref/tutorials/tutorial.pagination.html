@@ -1,0 +1,765 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Using Zend\Paginator in your Album Module &mdash; Swoole Documentation zh_CN 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="Swoole Documentation zh_CN 0.1 documentation" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li><a href="../../index.html">Swoole Documentation zh_CN 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="using-zend-paginator-in-your-album-module">
+<h1>Using Zend\Paginator in your Album Module<a class="headerlink" href="#using-zend-paginator-in-your-album-module" title="Permalink to this headline">¶</a></h1>
+<p>In this tutorial we will use the
+<em class="xref std std-ref">Zend\Paginator component</em> to add a handy
+pagination controller to the bottom of the album list.</p>
+<p>Currently, we only have a handful of albums to display, so showing everything on one page is not a problem.
+However, how will the album list look when we have 100 albums or more in our database? The standard solution
+to this problem is to split the data up into a number of pages, and allow the user to navigate around these
+pages using a pagination control. Just type &#8220;Zend Framework&#8221; into Google, and you can see their pagination
+control at the bottom of the page:</p>
+<img alt="Example pagination control" class="align-center" src="ref/tutorials/../images/tutorial.pagination.sample.png" />
+<div class="section" id="preparation">
+<h2>Preparation<a class="headerlink" href="#preparation" title="Permalink to this headline">¶</a></h2>
+<p>In order for us to have lots of albums in our database, you&#8217;ll need to run the following SQL insert statement
+to insert the current 150 top iTunes albums (at the time of writing!):</p>
+<div class="highlight-sql"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>  1
+  2
+  3
+  4
+  5
+  6
+  7
+  8
+  9
+ 10
+ 11
+ 12
+ 13
+ 14
+ 15
+ 16
+ 17
+ 18
+ 19
+ 20
+ 21
+ 22
+ 23
+ 24
+ 25
+ 26
+ 27
+ 28
+ 29
+ 30
+ 31
+ 32
+ 33
+ 34
+ 35
+ 36
+ 37
+ 38
+ 39
+ 40
+ 41
+ 42
+ 43
+ 44
+ 45
+ 46
+ 47
+ 48
+ 49
+ 50
+ 51
+ 52
+ 53
+ 54
+ 55
+ 56
+ 57
+ 58
+ 59
+ 60
+ 61
+ 62
+ 63
+ 64
+ 65
+ 66
+ 67
+ 68
+ 69
+ 70
+ 71
+ 72
+ 73
+ 74
+ 75
+ 76
+ 77
+ 78
+ 79
+ 80
+ 81
+ 82
+ 83
+ 84
+ 85
+ 86
+ 87
+ 88
+ 89
+ 90
+ 91
+ 92
+ 93
+ 94
+ 95
+ 96
+ 97
+ 98
+ 99
+100
+101
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111
+112
+113
+114
+115
+116
+117
+118
+119
+120
+121
+122
+123
+124
+125
+126
+127
+128
+129
+130
+131
+132
+133
+134
+135
+136
+137
+138
+139
+140
+141
+142
+143
+144
+145
+146
+147
+148
+149
+150
+151
+152
+153</pre></div></td><td class="code"><div class="highlight"><pre>INSERT INTO `album` (`artist`, `title`)
+VALUES
+    (&#39;David Bowie&#39;, &#39;The Next Day (Deluxe Version)&#39;),
+    (&#39;Bastille&#39;, &#39;Bad Blood&#39;),
+    (&#39;Bruno Mars&#39;, &#39;Unorthodox Jukebox&#39;),
+    (&#39;Emeli Sandé&#39;, &#39;Our Version of Events (Special Edition)&#39;),
+    (&#39;Bon Jovi&#39;, &#39;What About Now (Deluxe Version)&#39;),
+    (&#39;Justin Timberlake&#39;, &#39;The 20/20 Experience (Deluxe Version)&#39;),
+    (&#39;Bastille&#39;, &#39;Bad Blood (The Extended Cut)&#39;),
+    (&#39;P!nk&#39;, &#39;The Truth About Love&#39;),
+    (&#39;Sound City - Real to Reel&#39;, &#39;Sound City - Real to Reel&#39;),
+    (&#39;Jake Bugg&#39;, &#39;Jake Bugg&#39;),
+    (&#39;Various Artists&#39;, &#39;The Trevor Nelson Collection&#39;),
+    (&#39;David Bowie&#39;, &#39;The Next Day&#39;),
+    (&#39;Mumford &amp; Sons&#39;, &#39;Babel&#39;),
+    (&#39;The Lumineers&#39;, &#39;The Lumineers&#39;),
+    (&#39;Various Artists&#39;, &#39;Get Ur Freak On - R&amp;B Anthems&#39;),
+    (&#39;The 1975&#39;, &#39;Music For Cars EP&#39;),
+    (&#39;Various Artists&#39;, &#39;Saturday Night Club Classics - Ministry of Sound&#39;),
+    (&#39;Hurts&#39;, &#39;Exile (Deluxe)&#39;),
+    (&#39;Various Artists&#39;, &#39;Mixmag - The Greatest Dance Tracks of All Time&#39;),
+    (&#39;Ben Howard&#39;, &#39;Every Kingdom&#39;),
+    (&#39;Stereophonics&#39;, &#39;Graffiti On the Train&#39;),
+    (&#39;The Script&#39;, &#39;#3&#39;),
+    (&#39;Stornoway&#39;, &#39;Tales from Terra Firma&#39;),
+    (&#39;David Bowie&#39;, &#39;Hunky Dory (Remastered)&#39;),
+    (&#39;Worship Central&#39;, &#39;Let It Be Known (Live)&#39;),
+    (&#39;Ellie Goulding&#39;, &#39;Halcyon&#39;),
+    (&#39;Various Artists&#39;, &#39;Dermot O\&#39;Leary Presents the Saturday Sessions 2013&#39;),
+    (&#39;Stereophonics&#39;, &#39;Graffiti On the Train (Deluxe Version)&#39;),
+    (&#39;Dido&#39;, &#39;Girl Who Got Away (Deluxe)&#39;),
+    (&#39;Hurts&#39;, &#39;Exile&#39;),
+    (&#39;Bruno Mars&#39;, &#39;Doo-Wops &amp; Hooligans&#39;),
+    (&#39;Calvin Harris&#39;, &#39;18 Months&#39;),
+    (&#39;Olly Murs&#39;, &#39;Right Place Right Time&#39;),
+    (&#39;Alt-J (?)&#39;, &#39;An Awesome Wave&#39;),
+    (&#39;One Direction&#39;, &#39;Take Me Home&#39;),
+    (&#39;Various Artists&#39;, &#39;Pop Stars&#39;),
+    (&#39;Various Artists&#39;, &#39;Now That\&#39;s What I Call Music! 83&#39;),
+    (&#39;John Grant&#39;, &#39;Pale Green Ghosts&#39;),
+    (&#39;Paloma Faith&#39;, &#39;Fall to Grace&#39;),
+    (&#39;Laura Mvula&#39;, &#39;Sing To the Moon (Deluxe)&#39;),
+    (&#39;Duke Dumont&#39;, &#39;Need U (100%) [feat. A*M*E] - EP&#39;),
+    (&#39;Watsky&#39;, &#39;Cardboard Castles&#39;),
+    (&#39;Blondie&#39;, &#39;Blondie: Greatest Hits&#39;),
+    (&#39;Foals&#39;, &#39;Holy Fire&#39;),
+    (&#39;Maroon 5&#39;, &#39;Overexposed&#39;),
+    (&#39;Bastille&#39;, &#39;Pompeii (Remixes) - EP&#39;),
+    (&#39;Imagine Dragons&#39;, &#39;Hear Me - EP&#39;),
+    (&#39;Various Artists&#39;, &#39;100 Hits: 80s Classics&#39;),
+    (&#39;Various Artists&#39;, &#39;Les Misérables (Highlights From the Motion Picture Soundtrack)&#39;),
+    (&#39;Mumford &amp; Sons&#39;, &#39;Sigh No More&#39;),
+    (&#39;Frank Ocean&#39;, &#39;Channel ORANGE&#39;),
+    (&#39;Bon Jovi&#39;, &#39;What About Now&#39;),
+    (&#39;Various Artists&#39;, &#39;BRIT Awards 2013&#39;),
+    (&#39;Taylor Swift&#39;, &#39;Red&#39;),
+    (&#39;Fleetwood Mac&#39;, &#39;Fleetwood Mac: Greatest Hits&#39;),
+    (&#39;David Guetta&#39;, &#39;Nothing But the Beat Ultimate&#39;),
+    (&#39;Various Artists&#39;, &#39;Clubbers Guide 2013 (Mixed By Danny Howard) - Ministry of Sound&#39;),
+    (&#39;David Bowie&#39;, &#39;Best of Bowie&#39;),
+    (&#39;Laura Mvula&#39;, &#39;Sing To the Moon&#39;),
+    (&#39;ADELE&#39;, &#39;21&#39;),
+    (&#39;Of Monsters and Men&#39;, &#39;My Head Is an Animal&#39;),
+    (&#39;Rihanna&#39;, &#39;Unapologetic&#39;),
+    (&#39;Various Artists&#39;, &#39;BBC Radio 1\&#39;s Live Lounge - 2012&#39;),
+    (&#39;Avicii &amp; Nicky Romero&#39;, &#39;I Could Be the One (Avicii vs. Nicky Romero)&#39;),
+    (&#39;The Streets&#39;, &#39;A Grand Don\&#39;t Come for Free&#39;),
+    (&#39;Tim McGraw&#39;, &#39;Two Lanes of Freedom&#39;),
+    (&#39;Foo Fighters&#39;, &#39;Foo Fighters: Greatest Hits&#39;),
+    (&#39;Various Artists&#39;, &#39;Now That\&#39;s What I Call Running!&#39;),
+    (&#39;Swedish House Mafia&#39;, &#39;Until Now&#39;),
+    (&#39;The xx&#39;, &#39;Coexist&#39;),
+    (&#39;Five&#39;, &#39;Five: Greatest Hits&#39;),
+    (&#39;Jimi Hendrix&#39;, &#39;People, Hell &amp; Angels&#39;),
+    (&#39;Biffy Clyro&#39;, &#39;Opposites (Deluxe)&#39;),
+    (&#39;The Smiths&#39;, &#39;The Sound of the Smiths&#39;),
+    (&#39;The Saturdays&#39;, &#39;What About Us - EP&#39;),
+    (&#39;Fleetwood Mac&#39;, &#39;Rumours&#39;),
+    (&#39;Various Artists&#39;, &#39;The Big Reunion&#39;),
+    (&#39;Various Artists&#39;, &#39;Anthems 90s - Ministry of Sound&#39;),
+    (&#39;The Vaccines&#39;, &#39;Come of Age&#39;),
+    (&#39;Nicole Scherzinger&#39;, &#39;Boomerang (Remixes) - EP&#39;),
+    (&#39;Bob Marley&#39;, &#39;Legend (Bonus Track Version)&#39;),
+    (&#39;Josh Groban&#39;, &#39;All That Echoes&#39;),
+    (&#39;Blue&#39;, &#39;Best of Blue&#39;),
+    (&#39;Ed Sheeran&#39;, &#39;+&#39;),
+    (&#39;Olly Murs&#39;, &#39;In Case You Didn\&#39;t Know (Deluxe Edition)&#39;),
+    (&#39;Macklemore &amp; Ryan Lewis&#39;, &#39;The Heist (Deluxe Edition)&#39;),
+    (&#39;Various Artists&#39;, &#39;Defected Presents Most Rated Miami 2013&#39;),
+    (&#39;Gorgon City&#39;, &#39;Real EP&#39;),
+    (&#39;Mumford &amp; Sons&#39;, &#39;Babel (Deluxe Version)&#39;),
+    (&#39;Various Artists&#39;, &#39;The Music of Nashville: Season 1, Vol. 1 (Original Soundtrack)&#39;),
+    (&#39;Various Artists&#39;, &#39;The Twilight Saga: Breaking Dawn, Pt. 2 (Original Motion Picture Soundtrack)&#39;),
+    (&#39;Various Artists&#39;, &#39;Mum - The Ultimate Mothers Day Collection&#39;),
+    (&#39;One Direction&#39;, &#39;Up All Night&#39;),
+    (&#39;Bon Jovi&#39;, &#39;Bon Jovi Greatest Hits&#39;),
+    (&#39;Agnetha Fältskog&#39;, &#39;A&#39;),
+    (&#39;Fun.&#39;, &#39;Some Nights&#39;),
+    (&#39;Justin Bieber&#39;, &#39;Believe Acoustic&#39;),
+    (&#39;Atoms for Peace&#39;, &#39;Amok&#39;),
+    (&#39;Justin Timberlake&#39;, &#39;Justified&#39;),
+    (&#39;Passenger&#39;, &#39;All the Little Lights&#39;),
+    (&#39;Kodaline&#39;, &#39;The High Hopes EP&#39;),
+    (&#39;Lana Del Rey&#39;, &#39;Born to Die&#39;),
+    (&#39;JAY Z &amp; Kanye West&#39;, &#39;Watch the Throne (Deluxe Version)&#39;),
+    (&#39;Biffy Clyro&#39;, &#39;Opposites&#39;),
+    (&#39;Various Artists&#39;, &#39;Return of the 90s&#39;),
+    (&#39;Gabrielle Aplin&#39;, &#39;Please Don\&#39;t Say You Love Me - EP&#39;),
+    (&#39;Various Artists&#39;, &#39;100 Hits - Driving Rock&#39;),
+    (&#39;Jimi Hendrix&#39;, &#39;Experience Hendrix - The Best of Jimi Hendrix&#39;),
+    (&#39;Various Artists&#39;, &#39;The Workout Mix 2013&#39;),
+    (&#39;The 1975&#39;, &#39;Sex&#39;),
+    (&#39;Chase &amp; Status&#39;, &#39;No More Idols&#39;),
+    (&#39;Rihanna&#39;, &#39;Unapologetic (Deluxe Version)&#39;),
+    (&#39;The Killers&#39;, &#39;Battle Born&#39;),
+    (&#39;Olly Murs&#39;, &#39;Right Place Right Time (Deluxe Edition)&#39;),
+    (&#39;A$AP Rocky&#39;, &#39;LONG.LIVE.A$AP (Deluxe Version)&#39;),
+    (&#39;Various Artists&#39;, &#39;Cooking Songs&#39;),
+    (&#39;Haim&#39;, &#39;Forever - EP&#39;),
+    (&#39;Lianne La Havas&#39;, &#39;Is Your Love Big Enough?&#39;),
+    (&#39;Michael Bublé&#39;, &#39;To Be Loved&#39;),
+    (&#39;Daughter&#39;, &#39;If You Leave&#39;),
+    (&#39;The xx&#39;, &#39;xx&#39;),
+    (&#39;Eminem&#39;, &#39;Curtain Call&#39;),
+    (&#39;Kendrick Lamar&#39;, &#39;good kid, m.A.A.d city (Deluxe)&#39;),
+    (&#39;Disclosure&#39;, &#39;The Face - EP&#39;),
+    (&#39;Palma Violets&#39;, &#39;180&#39;),
+    (&#39;Cody Simpson&#39;, &#39;Paradise&#39;),
+    (&#39;Ed Sheeran&#39;, &#39;+ (Deluxe Version)&#39;),
+    (&#39;Michael Bublé&#39;, &#39;Crazy Love (Hollywood Edition)&#39;),
+    (&#39;Bon Jovi&#39;, &#39;Bon Jovi Greatest Hits - The Ultimate Collection&#39;),
+    (&#39;Rita Ora&#39;, &#39;Ora&#39;),
+    (&#39;g33k&#39;, &#39;Spabby&#39;),
+    (&#39;Various Artists&#39;, &#39;Annie Mac Presents 2012&#39;),
+    (&#39;David Bowie&#39;, &#39;The Platinum Collection&#39;),
+    (&#39;Bridgit Mendler&#39;, &#39;Ready or Not (Remixes) - EP&#39;),
+    (&#39;Dido&#39;, &#39;Girl Who Got Away&#39;),
+    (&#39;Various Artists&#39;, &#39;Now That\&#39;s What I Call Disney&#39;),
+    (&#39;The 1975&#39;, &#39;Facedown - EP&#39;),
+    (&#39;Kodaline&#39;, &#39;The Kodaline - EP&#39;),
+    (&#39;Various Artists&#39;, &#39;100 Hits: Super 70s&#39;),
+    (&#39;Fred V &amp; Grafix&#39;, &#39;Goggles - EP&#39;),
+    (&#39;Biffy Clyro&#39;, &#39;Only Revolutions (Deluxe Version)&#39;),
+    (&#39;Train&#39;, &#39;California 37&#39;),
+    (&#39;Ben Howard&#39;, &#39;Every Kingdom (Deluxe Edition)&#39;),
+    (&#39;Various Artists&#39;, &#39;Motown Anthems&#39;),
+    (&#39;Courteeners&#39;, &#39;ANNA&#39;),
+    (&#39;Johnny Marr&#39;, &#39;The Messenger&#39;),
+    (&#39;Rodriguez&#39;, &#39;Searching for Sugar Man&#39;),
+    (&#39;Jessie Ware&#39;, &#39;Devotion&#39;),
+    (&#39;Bruno Mars&#39;, &#39;Unorthodox Jukebox&#39;),
+    (&#39;Various Artists&#39;, &#39;Call the Midwife (Music From the TV Series)&#39;
+);
+</pre></div>
+</td></tr></table></div>
+<p>This gives us a handy extra 150 rows to play with. If you now visit your album list at <tt class="docutils literal"><span class="pre">/album</span></tt>, you&#8217;ll see
+a huge long list of 150+ albums, its ugly.</p>
+</div>
+<div class="section" id="modifying-the-albumtable">
+<h2>Modifying the AlbumTable<a class="headerlink" href="#modifying-the-albumtable" title="Permalink to this headline">¶</a></h2>
+<p>In order to let ZF2 handle our database queries automatically for us, we will be using the
+<em class="xref std std-ref">Zend\Paginator\Adapter\DbSelect paginator adapter</em>.
+This will automatically manipulate and run a <tt class="docutils literal"><span class="pre">Zend\Db\Sql\Select</span></tt> object to
+include the correct <tt class="docutils literal"><span class="pre">LIMIT</span></tt> and <tt class="docutils literal"><span class="pre">WHERE</span></tt> clauses, so that it returns only
+the right amount of data needed to display the given page. Let&#8217;s modify the
+<tt class="docutils literal"><span class="pre">fetchAll</span></tt> method of the <tt class="docutils literal"><span class="pre">AlbumTable</span></tt> model, so that it can optionally
+return a paginator object:</p>
+<p><tt class="docutils literal"><span class="pre">module/Album/src/Album/Model/AlbumTable.php</span></tt></p>
+<div class="highlight-php"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36</pre></div></td><td class="code"><div class="highlight"><pre><span class="x"> </span><span class="cp">&lt;?php</span>
+ <span class="k">namespace</span> <span class="nx">Album\Model</span><span class="p">;</span>
+
+ <span class="k">use</span> <span class="nx">Zend\Db\ResultSet\ResultSet</span><span class="p">;</span>
+ <span class="k">use</span> <span class="nx">Zend\Db\TableGateway\TableGateway</span><span class="p">;</span>
+ <span class="k">use</span> <span class="nx">Zend\Db\Sql\Select</span><span class="p">;</span>
+ <span class="k">use</span> <span class="nx">Zend\Paginator\Adapter\DbSelect</span><span class="p">;</span>
+ <span class="k">use</span> <span class="nx">Zend\Paginator\Paginator</span><span class="p">;</span>
+
+ <span class="k">class</span> <span class="nc">AlbumTable</span>
+ <span class="p">{</span>
+     <span class="o">...</span>
+     <span class="k">public</span> <span class="k">function</span> <span class="nf">fetchAll</span><span class="p">(</span><span class="nv">$paginated</span><span class="o">=</span><span class="k">false</span><span class="p">)</span>
+     <span class="p">{</span>
+         <span class="k">if</span> <span class="p">(</span><span class="nv">$paginated</span><span class="p">)</span> <span class="p">{</span>
+             <span class="c1">// create a new Select object for the table album</span>
+             <span class="nv">$select</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Select</span><span class="p">(</span><span class="s1">&#39;album&#39;</span><span class="p">);</span>
+             <span class="c1">// create a new result set based on the Album entity</span>
+             <span class="nv">$resultSetPrototype</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">ResultSet</span><span class="p">();</span>
+             <span class="nv">$resultSetPrototype</span><span class="o">-&gt;</span><span class="na">setArrayObjectPrototype</span><span class="p">(</span><span class="k">new</span> <span class="nx">Album</span><span class="p">());</span>
+             <span class="c1">// create a new pagination adapter object</span>
+             <span class="nv">$paginatorAdapter</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">DbSelect</span><span class="p">(</span>
+                 <span class="c1">// our configured select object</span>
+                 <span class="nv">$select</span><span class="p">,</span>
+                 <span class="c1">// the adapter to run it against</span>
+                 <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">tableGateway</span><span class="o">-&gt;</span><span class="na">getAdapter</span><span class="p">(),</span>
+                 <span class="c1">// the result set to hydrate</span>
+                 <span class="nv">$resultSetPrototype</span>
+             <span class="p">);</span>
+             <span class="nv">$paginator</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Paginator</span><span class="p">(</span><span class="nv">$paginatorAdapter</span><span class="p">);</span>
+             <span class="k">return</span> <span class="nv">$paginator</span><span class="p">;</span>
+         <span class="p">}</span>
+         <span class="nv">$resultSet</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">tableGateway</span><span class="o">-&gt;</span><span class="na">select</span><span class="p">();</span>
+         <span class="k">return</span> <span class="nv">$resultSet</span><span class="p">;</span>
+     <span class="p">}</span>
+     <span class="o">...</span>
+</pre></div>
+</td></tr></table></div>
+<p>This will return a fully configured <tt class="docutils literal"><span class="pre">Paginator</span></tt> object. We&#8217;ve already told the <tt class="docutils literal"><span class="pre">DbSelect</span></tt> adapter to
+use our created <tt class="docutils literal"><span class="pre">Select</span></tt> object, to use the adapter that the <tt class="docutils literal"><span class="pre">TableGateway</span></tt> object uses, and also how
+to hydrate the result into a <tt class="docutils literal"><span class="pre">Album</span></tt> entity in the same fashion as the <tt class="docutils literal"><span class="pre">TableGateway</span></tt> does. This means
+that our executed and returned paginator results will return <tt class="docutils literal"><span class="pre">Album</span></tt> objects in exactly the same fashion
+as the non-paginated results.</p>
+</div>
+<div class="section" id="modifying-the-albumcontroller">
+<h2>Modifying the AlbumController<a class="headerlink" href="#modifying-the-albumcontroller" title="Permalink to this headline">¶</a></h2>
+<p>Next, we need to tell the album controller to return a <tt class="docutils literal"><span class="pre">Pagination</span></tt> object instead of a <tt class="docutils literal"><span class="pre">ResultSet</span></tt>.
+Both these objects can by iterated over to return hydrated <tt class="docutils literal"><span class="pre">Album</span></tt> objects, so we won&#8217;t need to make many
+changes to the view script:</p>
+<p><tt class="docutils literal"><span class="pre">module/Album/src/Album/Controller/AlbumController.php</span></tt></p>
+<div class="highlight-php"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15</pre></div></td><td class="code"><div class="highlight"><pre><span class="x"> ...</span>
+<span class="x"> public function indexAction()</span>
+<span class="x"> {</span>
+<span class="x">     // grab the paginator from the AlbumTable</span>
+<span class="x">     $paginator = $this-&gt;getAlbumTable()-&gt;fetchAll(true);</span>
+<span class="x">     // set the current page to what has been passed in query string, or to 1 if none set</span>
+<span class="x">     $paginator-&gt;setCurrentPageNumber((int) $this-&gt;params()-&gt;fromQuery(&#39;page&#39;, 1));</span>
+<span class="x">     // set the number of items per page to 10</span>
+<span class="x">     $paginator-&gt;setItemCountPerPage(10);</span>
+
+<span class="x">     return new ViewModel(array(</span>
+<span class="x">         &#39;paginator&#39; =&gt; $paginator</span>
+<span class="x">     ));</span>
+<span class="x"> }</span>
+<span class="x"> ...</span>
+</pre></div>
+</td></tr></table></div>
+<p>Here we are getting the configured <tt class="docutils literal"><span class="pre">Paginator</span></tt> object from the <tt class="docutils literal"><span class="pre">AlbumTable</span></tt>, and then telling it to use
+the page that is optionally passed in the querystring <tt class="docutils literal"><span class="pre">page</span></tt> parameter. We are also telling the paginator
+we want to display 10 objects per page.</p>
+</div>
+<div class="section" id="updating-the-view-script">
+<h2>Updating the View Script<a class="headerlink" href="#updating-the-view-script" title="Permalink to this headline">¶</a></h2>
+<p>Now, let&#8217;s just tell the view script to iterate over the <tt class="docutils literal"><span class="pre">pagination</span></tt> view variable, rather than the
+<tt class="docutils literal"><span class="pre">albums</span></tt> variable:</p>
+<p><tt class="docutils literal"><span class="pre">module/Album/view/album/album/index.phtml</span></tt></p>
+<div class="highlight-php"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19</pre></div></td><td class="code"><div class="highlight"><pre><span class="x"> &lt;table class=&quot;table&quot;&gt;</span>
+<span class="x">     &lt;tr&gt;</span>
+<span class="x">         &lt;th&gt;Title&lt;/th&gt;</span>
+<span class="x">         &lt;th&gt;Artist&lt;/th&gt;</span>
+<span class="x">         &lt;th&gt;&amp;nbsp;&lt;/th&gt;</span>
+<span class="x">     &lt;/tr&gt;</span>
+<span class="x">     </span><span class="cp">&lt;?php</span> <span class="k">foreach</span> <span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">paginator</span> <span class="k">as</span> <span class="nv">$album</span><span class="p">)</span> <span class="o">:</span> <span class="c1">// &lt;-- change here! ?&gt;</span>
+         <span class="o">&lt;</span><span class="nx">tr</span><span class="o">&gt;</span>
+             <span class="o">&lt;</span><span class="nx">td</span><span class="o">&gt;&lt;?</span><span class="nx">php</span> <span class="k">echo</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">escapeHtml</span><span class="p">(</span><span class="nv">$album</span><span class="o">-&gt;</span><span class="na">title</span><span class="p">);</span><span class="cp">?&gt;</span><span class="x">&lt;/td&gt;</span>
+<span class="x">             &lt;td&gt;</span><span class="cp">&lt;?php</span> <span class="k">echo</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">escapeHtml</span><span class="p">(</span><span class="nv">$album</span><span class="o">-&gt;</span><span class="na">artist</span><span class="p">);</span><span class="cp">?&gt;</span><span class="x">&lt;/td&gt;</span>
+<span class="x">             &lt;td&gt;</span>
+<span class="x">                 &lt;a href=&quot;</span><span class="cp">&lt;?php</span> <span class="k">echo</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">url</span><span class="p">(</span><span class="s1">&#39;album&#39;</span><span class="p">,</span>
+                     <span class="k">array</span><span class="p">(</span><span class="s1">&#39;action&#39;</span> <span class="o">=&gt;</span> <span class="s1">&#39;edit&#39;</span><span class="p">,</span> <span class="s1">&#39;id&#39;</span> <span class="o">=&gt;</span> <span class="nv">$album</span><span class="o">-&gt;</span><span class="na">id</span><span class="p">));</span><span class="cp">?&gt;</span><span class="x">&quot;&gt;Edit&lt;/a&gt;</span>
+<span class="x">                 &lt;a href=&quot;</span><span class="cp">&lt;?php</span> <span class="k">echo</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">url</span><span class="p">(</span><span class="s1">&#39;album&#39;</span><span class="p">,</span>
+                     <span class="k">array</span><span class="p">(</span><span class="s1">&#39;action&#39;</span> <span class="o">=&gt;</span> <span class="s1">&#39;delete&#39;</span><span class="p">,</span> <span class="s1">&#39;id&#39;</span> <span class="o">=&gt;</span> <span class="nv">$album</span><span class="o">-&gt;</span><span class="na">id</span><span class="p">));</span><span class="cp">?&gt;</span><span class="x">&quot;&gt;Delete&lt;/a&gt;</span>
+<span class="x">             &lt;/td&gt;</span>
+<span class="x">         &lt;/tr&gt;</span>
+<span class="x">     </span><span class="cp">&lt;?php</span> <span class="k">endforeach</span><span class="p">;</span> <span class="cp">?&gt;</span><span class="x"></span>
+<span class="x"> &lt;/table&gt;</span>
+</pre></div>
+</td></tr></table></div>
+<p>Checking the <tt class="docutils literal"><span class="pre">/album</span></tt> route on your website should now give you a list of just 10 albums, but with no method
+to navigate through the pages. Let&#8217;s correct that now...</p>
+</div>
+<div class="section" id="creating-the-pagination-control-partial">
+<h2>Creating the Pagination Control Partial<a class="headerlink" href="#creating-the-pagination-control-partial" title="Permalink to this headline">¶</a></h2>
+<p>Much like we created a custom breadcrumbs partial to render our breadcrumb in the last tutorial, we need to
+create a custom pagination control partial to render our pagination control just the way we want it. Again,
+because we are using Twitter Bootstrap, this should be as simple as outputting correctly formatted html to get
+a pretty control. Let&#8217;s create the partial in the <tt class="docutils literal"><span class="pre">module/Application/view/partial/</span></tt> folder, so that we can
+use the control in all our modules:</p>
+<p><tt class="docutils literal"><span class="pre">module/Application/view/partial/paginator.phtml</span></tt></p>
+<div class="highlight-php"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50</pre></div></td><td class="code"><div class="highlight"><pre><span class="x"> </span><span class="cp">&lt;?php</span> <span class="k">if</span> <span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">pageCount</span><span class="p">)</span><span class="o">:</span> <span class="cp">?&gt;</span><span class="x"></span>
+<span class="x">     &lt;div&gt;</span>
+<span class="x">         &lt;ul class=&quot;pagination&quot;&gt;</span>
+<span class="x">             &lt;!-- Previous page link --&gt;</span>
+<span class="x">             </span><span class="cp">&lt;?php</span> <span class="k">if</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">previous</span><span class="p">))</span><span class="o">:</span> <span class="cp">?&gt;</span><span class="x"></span>
+<span class="x">                 &lt;li&gt;</span>
+<span class="x">                     &lt;a href=&quot;</span><span class="cp">&lt;?php</span> <span class="k">echo</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">url</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">route</span><span class="p">);</span> <span class="cp">?&gt;</span><span class="x">?page=</span><span class="cp">&lt;?php</span> <span class="k">echo</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">previous</span><span class="p">;</span> <span class="cp">?&gt;</span><span class="x">&quot;&gt;</span>
+<span class="x">                         &lt;&lt;</span>
+<span class="x">                     &lt;/a&gt;</span>
+<span class="x">                 &lt;/li&gt;</span>
+<span class="x">             </span><span class="cp">&lt;?php</span> <span class="k">else</span><span class="o">:</span> <span class="cp">?&gt;</span><span class="x"></span>
+<span class="x">                 &lt;li class=&quot;disabled&quot;&gt;</span>
+<span class="x">                     &lt;a href=&quot;#&quot;&gt;</span>
+<span class="x">                         &lt;&lt;</span>
+<span class="x">                     &lt;/a&gt;</span>
+<span class="x">                 &lt;/li&gt;</span>
+<span class="x">             </span><span class="cp">&lt;?php</span> <span class="k">endif</span><span class="p">;</span> <span class="cp">?&gt;</span><span class="x"></span>
+
+<span class="x">             &lt;!-- Numbered page links --&gt;</span>
+<span class="x">             </span><span class="cp">&lt;?php</span> <span class="k">foreach</span> <span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">pagesInRange</span> <span class="k">as</span> <span class="nv">$page</span><span class="p">)</span><span class="o">:</span> <span class="cp">?&gt;</span><span class="x"></span>
+<span class="x">                 </span><span class="cp">&lt;?php</span> <span class="k">if</span> <span class="p">(</span><span class="nv">$page</span> <span class="o">!=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">current</span><span class="p">)</span><span class="o">:</span> <span class="cp">?&gt;</span><span class="x"></span>
+<span class="x">                     &lt;li&gt;</span>
+<span class="x">                         &lt;a href=&quot;</span><span class="cp">&lt;?php</span> <span class="k">echo</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">url</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">route</span><span class="p">);</span><span class="cp">?&gt;</span><span class="x">?page=</span><span class="cp">&lt;?php</span> <span class="k">echo</span> <span class="nv">$page</span><span class="p">;</span> <span class="cp">?&gt;</span><span class="x">&quot;&gt;</span>
+<span class="x">                             </span><span class="cp">&lt;?php</span> <span class="k">echo</span> <span class="nv">$page</span><span class="p">;</span> <span class="cp">?&gt;</span><span class="x"></span>
+<span class="x">                         &lt;/a&gt;</span>
+<span class="x">                     &lt;/li&gt;</span>
+<span class="x">                 </span><span class="cp">&lt;?php</span> <span class="k">else</span><span class="o">:</span> <span class="cp">?&gt;</span><span class="x"></span>
+<span class="x">                     &lt;li class=&quot;active&quot;&gt;</span>
+<span class="x">                         &lt;a href=&quot;#&quot;&gt;</span><span class="cp">&lt;?php</span> <span class="k">echo</span> <span class="nv">$page</span><span class="p">;</span> <span class="cp">?&gt;</span><span class="x">&lt;/a&gt;</span>
+<span class="x">                     &lt;/li&gt;</span>
+<span class="x">                 </span><span class="cp">&lt;?php</span> <span class="k">endif</span><span class="p">;</span> <span class="cp">?&gt;</span><span class="x"></span>
+<span class="x">             </span><span class="cp">&lt;?php</span> <span class="k">endforeach</span><span class="p">;</span> <span class="cp">?&gt;</span><span class="x"></span>
+
+<span class="x">             &lt;!-- Next page link --&gt;</span>
+<span class="x">             </span><span class="cp">&lt;?php</span> <span class="k">if</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">next</span><span class="p">))</span><span class="o">:</span> <span class="cp">?&gt;</span><span class="x"></span>
+<span class="x">                 &lt;li&gt;</span>
+<span class="x">                     &lt;a href=&quot;</span><span class="cp">&lt;?php</span> <span class="k">echo</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">url</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">route</span><span class="p">);</span> <span class="cp">?&gt;</span><span class="x">?page=</span><span class="cp">&lt;?php</span> <span class="k">echo</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">next</span><span class="p">;</span> <span class="cp">?&gt;</span><span class="x">&quot;&gt;</span>
+<span class="x">                         &gt;&gt;</span>
+<span class="x">                     &lt;/a&gt;</span>
+<span class="x">                 &lt;/li&gt;</span>
+<span class="x">             </span><span class="cp">&lt;?php</span> <span class="k">else</span><span class="o">:</span> <span class="cp">?&gt;</span><span class="x"></span>
+<span class="x">                 &lt;li class=&quot;disabled&quot;&gt;</span>
+<span class="x">                     &lt;a href=&quot;#&quot;&gt;</span>
+<span class="x">                         &gt;&gt;</span>
+<span class="x">                     &lt;/a&gt;</span>
+<span class="x">                 &lt;/li&gt;</span>
+<span class="x">             </span><span class="cp">&lt;?php</span> <span class="k">endif</span><span class="p">;</span> <span class="cp">?&gt;</span><span class="x"></span>
+<span class="x">         &lt;/ul&gt;</span>
+<span class="x">     &lt;/div&gt;</span>
+<span class="x"> </span><span class="cp">&lt;?php</span> <span class="k">endif</span><span class="p">;</span> <span class="cp">?&gt;</span><span class="x"></span>
+</pre></div>
+</td></tr></table></div>
+<p>All this partial does is to create a pagination control with links to the correct pages (if there is more
+than one page in the pagination object). It will render a previous page link (and mark it disabled if you
+are at the first page), then render a list of intermediate pages (that are passed to the partial based on
+the rendering style &#8211; we&#8217;ll set in the view helper in the next step). Finally, it will create a next page
+link (and disable it if you&#8217;re at the end). Notice how we pass the page number via the <tt class="docutils literal"><span class="pre">page</span></tt> querystring
+parameter which we have already told our controller to use to display the current page.</p>
+</div>
+</div>
+<div class="section" id="using-the-paginationcontrol-view-helper">
+<h1>Using the PaginationControl View Helper<a class="headerlink" href="#using-the-paginationcontrol-view-helper" title="Permalink to this headline">¶</a></h1>
+<p>The only thing left for us to do so that we can page through the albums is to use the
+<em class="xref std std-ref">paginationControl view helper</em> to display our
+pagination control. This is nicely straightforward as we have already done all
+the ground work needed to display the control:</p>
+<p><tt class="docutils literal"><span class="pre">module/Album/view/album/album/index.phtml</span></tt></p>
+<div class="highlight-php"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16</pre></div></td><td class="code"><div class="highlight"><pre><span class="x"> ...</span>
+<span class="x"> </span><span class="cp">&lt;?php</span>
+ <span class="c1">// add at the end of the file after the table</span>
+ <span class="k">echo</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">paginationControl</span><span class="p">(</span>
+     <span class="c1">// the paginator object</span>
+     <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">paginator</span><span class="p">,</span>
+     <span class="c1">// the scrolling style</span>
+     <span class="s1">&#39;sliding&#39;</span><span class="p">,</span>
+     <span class="c1">// the partial to use to render the control</span>
+     <span class="k">array</span><span class="p">(</span><span class="s1">&#39;partial/paginator.phtml&#39;</span><span class="p">,</span> <span class="s1">&#39;Album&#39;</span><span class="p">),</span>
+     <span class="c1">// the route to link to when a user clicks a control link</span>
+     <span class="k">array</span><span class="p">(</span>
+         <span class="s1">&#39;route&#39;</span> <span class="o">=&gt;</span> <span class="s1">&#39;album&#39;</span>
+     <span class="p">)</span>
+ <span class="p">);</span>
+ <span class="cp">?&gt;</span><span class="x"></span>
+</pre></div>
+</td></tr></table></div>
+<p>All we need to do here is to echo the <cite>paginationControl</cite> helper, and tell it to
+use our paginator object, sliding
+<em class="xref std std-ref">scrolling style</em>, our
+paginator partial, and which route to use for clicks. Refreshing your
+application should give you a lovely bootstrap styled pagination control!</p>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Using Zend\Paginator in your Album Module</a><ul>
+<li><a class="reference internal" href="#preparation">Preparation</a></li>
+<li><a class="reference internal" href="#modifying-the-albumtable">Modifying the AlbumTable</a></li>
+<li><a class="reference internal" href="#modifying-the-albumcontroller">Modifying the AlbumController</a></li>
+<li><a class="reference internal" href="#updating-the-view-script">Updating the View Script</a></li>
+<li><a class="reference internal" href="#creating-the-pagination-control-partial">Creating the Pagination Control Partial</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#using-the-paginationcontrol-view-helper">Using the PaginationControl View Helper</a></li>
+</ul>
+
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../../_sources/ref/tutorials/tutorial.pagination.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li><a href="../../index.html">Swoole Documentation zh_CN 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, betashepherd.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

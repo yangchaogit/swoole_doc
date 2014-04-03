@@ -1,0 +1,110 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>如何安装？ &mdash; Swoole Documentation zh_CN 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="Swoole Documentation zh_CN 0.1 documentation" href="../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li><a href="../index.html">Swoole Documentation zh_CN 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="introduction-installation">
+<span id="id1"></span><h1>如何安装？<a class="headerlink" href="#introduction-installation" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><strong>New to Zend Framework?</strong>
+<a class="reference external" href="http://packages.zendframework.com/">Download the latest stable release.</a> Available in <tt class="docutils literal"><span class="pre">.zip</span></tt> and <tt class="docutils literal"><span class="pre">.tar.gz</span></tt> formats.</li>
+<li><strong>Brave, cutting edge?</strong>
+Download <a class="reference external" href="https://github.com/zendframework/zf2">Zend Framework&#8217;s Git repository</a> using a <a class="reference external" href="http://git-scm.com/">Git</a> client. Zend Framework is open source software,
+and the Git repository used for its development is publicly available on <a class="reference external" href="http://github.com/">GitHub</a>. Consider using Git to get
+Zend Framework if you want to contribute back to the framework, or need to upgrade your framework version more
+often than releases occur.</li>
+</ul>
+<p>Once you have a copy of Zend Framework available, your application needs to be able to access the framework classes
+found in the library folder. There are <a class="reference external" href="http://www.php.net/manual/en/configuration.changes.php">several ways to achieve this</a>.</p>
+<p>Failing to find a Zend Framework 2 installation, the following error occurs:</p>
+<div class="highlight-python"><div class="highlight"><pre>Fatal error: Uncaught exception &#39;RuntimeException&#39; with message
+&#39;Unable to load ZF2. Run `php composer.phar install` or define
+a ZF2_PATH environment variable.&#39;
+</pre></div>
+</div>
+<p>To fix that, you can add the Zend Framework&#8217;s library path to the <em>PHP</em> <a class="reference external" href="http://www.php.net/manual/en/ini.core.php#ini.include-path">include_path</a>.
+Also, you should set an environment path named &#8216;ZF2_PATH&#8217; in httpd.conf (or equivalent).
+i.e.  <tt class="docutils literal"><span class="pre">SetEnv</span> <span class="pre">ZF2_PATH</span> <span class="pre">/var/ZF2</span></tt> running Linux.</p>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/ref/installation.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li><a href="../index.html">Swoole Documentation zh_CN 0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, betashepherd.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>
