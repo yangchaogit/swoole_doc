@@ -1,12 +1,11 @@
 .. _copyrights:
 
-*********************
-Copyright Information
-*********************
+*******
+版权信息
+*******
 
-The following copyrights are applicable to portions of Zend Framework.
+swoole 采用 Apache License, Version 2.0
 
-Copyright © 2005-2014 Zend Technologies Inc. (http://www.zend.com)
-
+详情请阅读，http://www.apache.org/licenses/LICENSE-2.0
 
 
