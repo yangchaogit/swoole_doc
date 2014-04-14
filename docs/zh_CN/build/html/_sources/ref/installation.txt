@@ -44,8 +44,11 @@ Swoole扩展是按照php标准扩展构建的，作为一只勤劳的蜜蜂的�
 --enable-msgqueue，使用消息队列作为IPC通信方式，消息队列的好处是buffer区域可以很大，另外dispatch_mode=3时，消息队列天然支持争抢。使用消息队列作为IPC时，worker进程内将无法使用异步，包括异步swoole_client，task/finish，swoole_event_add，swoole_timer_add
 
 --enable-swoole-debug，打开调试日志，开启此选项后swoole将打印各类细节的调试日志。生产环境不要启用。
+
 --enable-sockets，增加对sockets资源的支持，依赖sockets扩展。开启此参数，swoole_event_add就可以添加sockets扩展创建的连接到swoole的事件循环中。
---enable-async-mysql，增加异步mysql支持， 依赖mysqli和mysqlnd
+
+--enable-async-mysql，增加异步mysql支持， 依赖mysqli和mysqlnd。
+
 
 依然有问题？
 ---------

@@ -19,17 +19,10 @@ Swoole 中文手册
     * :doc:`ref/installation`
     * :doc:`ref/changelog`
 
-用户向导
+examples
 -------
 
-    * :doc:`ref/user-guide/overview`
-    * :doc:`ref/user-guide/skeleton-application`
-    * :doc:`ref/user-guide/modules`
-    * :doc:`ref/user-guide/routing-and-controllers`
-    * :doc:`ref/user-guide/database-and-models`
-    * :doc:`ref/user-guide/styling-and-translations`
-    * :doc:`ref/user-guide/forms-and-actions`
-    * :doc:`ref/user-guide/conclusion`
+    * :doc:`ref/tutorials/server`
 
 版权
 ----

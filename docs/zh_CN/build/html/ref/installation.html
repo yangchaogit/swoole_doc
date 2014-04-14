@@ -76,9 +76,9 @@ echo &quot;extension=swoole.so&quot; &gt;&gt; /path/to/php.ini
 <div class="section" id="id4">
 <h2>开启某些特性<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
 <p>&#8211;enable-msgqueue，使用消息队列作为IPC通信方式，消息队列的好处是buffer区域可以很大，另外dispatch_mode=3时，消息队列天然支持争抢。使用消息队列作为IPC时，worker进程内将无法使用异步，包括异步swoole_client，task/finish，swoole_event_add，swoole_timer_add</p>
-<p>&#8211;enable-swoole-debug，打开调试日志，开启此选项后swoole将打印各类细节的调试日志。生产环境不要启用。
-&#8211;enable-sockets，增加对sockets资源的支持，依赖sockets扩展。开启此参数，swoole_event_add就可以添加sockets扩展创建的连接到swoole的事件循环中。
-&#8211;enable-async-mysql，增加异步mysql支持， 依赖mysqli和mysqlnd</p>
+<p>&#8211;enable-swoole-debug，打开调试日志，开启此选项后swoole将打印各类细节的调试日志。生产环境不要启用。</p>
+<p>&#8211;enable-sockets，增加对sockets资源的支持，依赖sockets扩展。开启此参数，swoole_event_add就可以添加sockets扩展创建的连接到swoole的事件循环中。</p>
+<p>&#8211;enable-async-mysql，增加异步mysql支持， 依赖mysqli和mysqlnd。</p>
 </div>
 <div class="section" id="id5">
 <h2>依然有问题？<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h2>
