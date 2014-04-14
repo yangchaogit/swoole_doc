@@ -16,12 +16,11 @@ Swoole 中文手册
 ----
 
     * :doc:`ref/overview`
-    * :doc:`ref/installation`
     * :doc:`ref/changelog`
 
-examples
+用户向导
 -------
-
+    * :doc:`ref/installation`
     * :doc:`ref/tutorials/server`
 
 版权
