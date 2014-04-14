@@ -14,7 +14,6 @@ Swoole 中文手册
     
 介绍
 ----
-
     * :doc:`ref/overview`
     * :doc:`ref/changelog`
 
@@ -25,5 +24,4 @@ Swoole 中文手册
 
 版权
 ----
-
     * :doc:`ref/copyrights`
